@@ -11,6 +11,7 @@
     <script src="js/auth.js"></script>
     <script src="js/leaderboard.js"></script>
     <script src="js/schulte.js"></script>
+    <script src="js/reaction.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -331,7 +332,7 @@
     <div id="view-reaction" class="view-section">
         <div class="dashboard" style="justify-content: center;">
             <div class="rt-center">
-                <div id="reaction-pad" class="rt-idle" onmousedown="handleRtClick(event)" ontouchstart="handleRtClick(event)">
+                <div id="reaction-pad" class="rt-idle" onmousedown="Reaction.handleClick(event)" ontouchstart="Reaction.handleClick(event)">
                     <div id="reaction-icon">⚡</div>
                     <div id="reaction-msg">点击此处开始测试</div>
                     <div id="reaction-sub">测试为 5 次取平均值</div>
@@ -351,7 +352,7 @@
                 <div class="module-card">
                     <h3 class="module-title">⏱️ 测试轨迹 <span class="sub">Recent 10</span></h3>
                     <div id="rt-records"></div>
-                    <button class="btn-danger" style="margin-top:15px;" onclick="clearRtRecords()">清除反应数据</button>
+                    <button class="btn-danger" style="margin-top:15px;" onclick="Reaction.clearRecords()">清除反应数据</button>
                 </div>
                 <div class="module-card">
                     <h3 class="module-title">⚡ 反应排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="LB.open()">查看全部 →</span></h3>
@@ -1922,15 +1923,11 @@
             clearInterval(msTimerInterval);
             if (bkAnimFrame) cancelAnimationFrame(bkAnimFrame);
             bkPlaying = false;
-            clearTimeout(rtTimeout);
-            
+            Reaction.reset();
+
             // 舒尔特重置
             Schulte.isPlaying = false;
             document.getElementById('overlay').style.display = 'none';
-            
-            // 反应重置
-            rtState = 'idle';
-            setRtUI('idle', '⚡', '点击此处开始测试', '测试为 5 次取平均值', false);
             
             // Aim重置 
             aimPlaying = false;
@@ -1988,7 +1985,7 @@
                 if (currentView === 'schulte') {
                     if (!Schulte.isPlaying && !Schulte.isCountingDown) Schulte.prepare();
                 } else if (currentView === 'reaction') {
-                    handleRtClick(); 
+                    Reaction.handleClick();
                 } else if (currentView === 'aim') {
                     if (!aimPlaying) startAim();
                 } else if (currentView === 'stroop') {
@@ -2003,7 +2000,7 @@
 
         window.onload = function() {
             Schulte.renderRecords();
-            renderRtRecords();
+            Reaction.renderRecords();
             renderExtraPB();
             updateRadarChart();
             loadGameData();
@@ -2146,8 +2143,8 @@
                     startAim();
                 } else if (routine.step === 3) {
                     switchView('reaction');
-                    rtState = 'idle'; // Reset reaction
-                    handleRtClick(); // Auto start wait
+                    Reaction.state = 'idle'; // Reset reaction
+                    Reaction.handleClick(); // Auto start wait
                 } else {
                     finishRoutine();
                 }
@@ -2196,142 +2193,6 @@
                 </div>
             `;
         }
-
-
-
-        // ==========================================
-        // 原版保留区：反应测试 (Reaction Logic)
-        // ==========================================
-        let rtState = 'idle'; 
-        let rtTimeout = null;
-        let rtStartTime = 0;
-        let rtResults = []; 
-
-        const rtPad = document.getElementById('reaction-pad');
-        const rtIcon = document.getElementById('reaction-icon');
-        const rtMsg = document.getElementById('reaction-msg');
-        const rtSub = document.getElementById('reaction-sub');
-        const rtTriesDisplay = document.getElementById('reaction-tries');
-
-        function resetRt() {
-            clearTimeout(rtTimeout); rtState = 'idle'; rtResults = [];
-            setRtUI('idle', '⚡', '点击此处开始测试', '测试为 5 次取平均值', false);
-        }
-
-        function setRtUI(stateClass, icon, msg, sub, showTries) {
-            rtPad.className = ''; rtPad.classList.add('rt-' + stateClass);
-            rtIcon.innerText = icon; rtMsg.innerText = msg; rtSub.innerText = sub;
-            rtTriesDisplay.style.display = showTries ? 'block' : 'none';
-            if(showTries) rtTriesDisplay.innerText = `进度: ${rtResults.length} / 5`;
-
-            // Punch animation on state transitions
-            if (stateClass === 'ready') {
-                gsap.fromTo(rtPad, { scale: 0.95 }, { scale: 1, duration: 0.2, ease: 'back.out(2)' });
-            }
-            if (stateClass === 'waiting') {
-                gsap.fromTo(rtPad, { scale: 1.02 }, { scale: 1, duration: 0.25, ease: 'power2.out' });
-            }
-            // Pop the result number
-            if (icon === '⏱️' || icon === '🎯') {
-                gsap.fromTo(rtMsg, { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(2)' });
-            }
-        }
-
-        function handleRtClick(e) {
-            if (e) e.preventDefault(); 
-            if (currentView !== 'reaction' && !routine.active) return; 
-            if (rtState === 'idle') {
-                startRtWaiting();
-            } else if (rtState === 'waiting') {
-                clearTimeout(rtTimeout);
-                setRtUI('idle', '⚠️', '太急了！抢跑无效', '点击重试当前轮次', true);
-                rtState = 'idle'; 
-            } else if (rtState === 'ready') {
-                let reactionTime = Date.now() - rtStartTime;
-                rtResults.push(reactionTime);
-                if (rtResults.length < 5) {
-                    setRtUI('idle', '⏱️', `${reactionTime} ms`, '点击继续下一次', true);
-                    rtState = 'idle';
-                    if(routine && routine.active) setTimeout(handleRtClick, 1000); 
-                } else {
-                    let sum = rtResults.reduce((a, b) => a + b, 0), avg = Math.round(sum / 5);
-                    let rankDesc = getRtRank(avg);
-                    setRtUI('idle', '🎯', `平均: ${avg} ms`, `评价: ${rankDesc.name}。点击重新开始`, true);
-                    rtTriesDisplay.innerText = "测试完成"; rtState = 'idle';
-                    saveRtRecord(avg, rankDesc); rtResults = []; 
-                    
-                    if(routine && routine.active && routine.step === 3) routineNext('reaction', avg); 
-                }
-            }
-        }
-
-        function startRtWaiting() {
-            rtState = 'waiting';
-            setRtUI('waiting', '🔴', '等待绿色...', '专注，不要提前抢跑', true);
-            let delay = Math.floor(Math.random() * 2500) + 1500;
-            rtTimeout = setTimeout(() => {
-                rtState = 'ready';
-                setRtUI('ready', '🟢', '点击！', '', true);
-                rtStartTime = Date.now();
-            }, delay);
-        }
-
-        function getRtRank(ms) {
-            if (ms <= 160) return { name: "外星神经", color: "#8b5cf6" };
-            if (ms <= 200) return { name: "电竞选手", color: "#3b82f6" };
-            if (ms <= 250) return { name: "眼疾手快", color: "#10b981" };
-            if (ms <= 300) return { name: "普通路人", color: "#f59e0b" };
-            return { name: "老年反应", color: "#6b7280" };
-        }
-
-        function saveRtRecord(avgMs, rankDesc) {
-            const date = new Date(), dateStr = `${date.getMonth()+1}-${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-            let records = JSON.parse(localStorage.getItem('rtRecords') || '[]');
-            records.unshift({ date: dateStr, ms: avgMs, rank: rankDesc.name, color: rankDesc.color });
-            if (records.length > 10) records.pop();
-            Storage.syncSetItem('rtRecords', JSON.stringify(records));
-
-            let best = JSON.parse(localStorage.getItem('rtBest') || 'null');
-            if (!best || avgMs < best.ms) {
-                best = { ms: avgMs, date: dateStr, rank: rankDesc.name, color: rankDesc.color };
-                Storage.syncSetItem('rtBest', JSON.stringify(best));
-                updateRadarChart(); 
-            }
-            renderRtRecords();
-        }
-
-        function renderRtRecords() {
-            const best = JSON.parse(localStorage.getItem('rtBest') || 'null');
-            const bestTimeEl = document.getElementById('rt-best-time'), bestRankEl = document.getElementById('rt-best-rank'), bestDateEl = document.getElementById('rt-best-date');
-
-            if (best) {
-                bestTimeEl.innerText = `${best.ms} ms`; bestRankEl.innerText = best.rank;
-                bestRankEl.style.color = best.color; bestRankEl.style.backgroundColor = best.color + '20';
-                bestDateEl.innerText = best.date;
-            } else {
-                bestTimeEl.innerText = '-- ms'; bestRankEl.innerText = '未挑战';
-                bestRankEl.style.color = '#9ca3af'; bestRankEl.style.backgroundColor = 'rgba(156,163,175,0.2)';
-                bestDateEl.innerText = '--';
-            }
-
-            const records = JSON.parse(localStorage.getItem('rtRecords') || '[]');
-            const listEl = document.getElementById('rt-records');
-            if (records.length === 0) { listEl.innerHTML = '<div class="empty-records">暂无反应测试记录</div>'; return; }
-            
-            let html = '<table><tr><th>时间</th><th>平均反应</th><th>评级</th></tr>';
-            records.forEach(r => {
-                html += `<tr><td style="color: var(--text-sub); font-size: 11px;">${r.date}</td><td style="font-weight:bold; font-family: monospace; font-size:16px;">${r.ms} ms</td><td style="color: ${r.color}; font-weight:bold; font-size:12px;">${r.rank}</td></tr>`;
-            });
-            listEl.innerHTML = html + '</table>';
-        }
-
-        function clearRtRecords() {
-            if(confirm("确定要清空极限反应的生涯数据吗？")) {
-                localStorage.removeItem('rtRecords'); localStorage.removeItem('rtBest'); renderRtRecords();
-                updateRadarChart();
-            }
-        }
-
         // ==========================================
         // 新增：精准定位 (Aim Logic)
         // ==========================================
