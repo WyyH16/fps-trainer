@@ -36,7 +36,7 @@ window.Reaction = (function() {
 
   function handleRtClick(e) {
     if (e) e.preventDefault();
-    if (currentView !== 'reaction' && !Routine.active) return;
+    if (App.currentView !== 'reaction' && !Routine.active) return;
     if (rtState === 'idle') {
       startRtWaiting();
     } else if (rtState === 'waiting') {

@@ -176,9 +176,9 @@ window.Auth = (function() {
       updateAuthButton();
       closeAuthModal();
       // 刷新所有已显示的排行榜
-      if (currentView === 'overview') fetchMiniLeaderboard();
-      var cfg = MODULE_LB_MAP[currentView];
-      if (cfg) fetchModuleLB(currentView);
+      if (App.currentView === 'overview') fetchMiniLeaderboard();
+      var cfg = MODULE_LB_MAP[App.currentView];
+      if (cfg) fetchModuleLB(App.currentView);
       showToast('资料已更新');
     } catch (e) {
       errEl.innerText = '保存失败: ' + (e.message || '未知错误');

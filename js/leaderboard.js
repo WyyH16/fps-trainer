@@ -101,8 +101,8 @@ window.LB = (function() {
   }
 
   function refreshRelevantLB(module) {
-    if (currentView === 'overview') { fetchMiniLeaderboard(); }
-    if (MODULE_LB_MAP[module] && currentView === module) { fetchModuleLB(module); }
+    if (App.currentView === 'overview') { fetchMiniLeaderboard(); }
+    if (MODULE_LB_MAP[module] && App.currentView === module) { fetchModuleLB(module); }
   }
 
   async function fetchModuleLB(view) {
@@ -143,7 +143,7 @@ window.LB = (function() {
     MODULE_LB_MAP.schulte.sub = grid;
     var btns = document.querySelectorAll('#schulte-lb-grid-btns .lb-grid-btn');
     btns.forEach(function(b) { b.classList.toggle('active', b.dataset.grid === grid); });
-    if (currentView === 'schulte') { fetchModuleLB('schulte'); }
+    if (App.currentView === 'schulte') { fetchModuleLB('schulte'); }
   }
 
   async function fetchEntertainmentLB(game) {

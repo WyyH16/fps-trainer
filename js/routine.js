@@ -5,7 +5,7 @@ window.Routine = (function() {
     state = { active: true, step: 1, scores: {} };
     document.getElementById('routine-result-card').style.display = 'none';
     // Step 1: Schulte 4x4
-    switchView('schulte');
+    App.switchView('schulte');
     document.getElementById('grid-size').value = 4;
     document.getElementById('countdown').value = 3;
     document.getElementById('mode-blind').checked = false;
@@ -20,10 +20,10 @@ window.Routine = (function() {
 
     setTimeout(() => {
       if (state.step === 2) {
-        switchView('aim');
+        App.switchView('aim');
         Aim.start();
       } else if (state.step === 3) {
-        switchView('reaction');
+        App.switchView('reaction');
         Reaction.state = 'idle'; // Reset reaction
         Reaction.handleClick(); // Auto start wait
       } else {
@@ -34,7 +34,7 @@ window.Routine = (function() {
 
   function finish() {
     state.active = false;
-    switchView('overview');
+    App.switchView('overview');
     document.getElementById('routine-result-card').style.display = 'block';
 
     // 计算综合状态得分
