@@ -13,6 +13,7 @@
     <script src="js/schulte.js"></script>
     <script src="js/reaction.js"></script>
     <script src="js/aim.js"></script>
+    <script src="js/stroop.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -408,7 +409,7 @@
                         <div class="stat-box"><div style="font-size:12px;">当前进度</div><div class="stat-val" id="st-prog">0/20</div></div>
                     </div>
                 </div>
-                <button class="btn-action" onclick="startStroop()">START 启动抗压</button>
+                <button class="btn-action" onclick="Stroop.start()">START 启动抗压</button>
                 <div class="module-card" style="margin-top: 20px;">
                     <h3 class="module-title">🏆 决策 PB</h3>
                     <div class="stat-box"><div style="font-size:12px;">20次最快纪录</div><div class="stat-val" id="st-pb">-- s</div></div>
@@ -426,12 +427,12 @@
                     <div id="stroop-word">色彩</div>
                 </div>
                 <div class="stroop-btns">
-                    <button class="stroop-btn" style="background:var(--danger-color);" onclick="stroopClick('红')">红</button>
-                    <button class="stroop-btn" style="background:var(--accent-color);" onclick="stroopClick('蓝')">蓝</button>
-                    <button class="stroop-btn" style="background:var(--success-color);" onclick="stroopClick('绿')">绿</button>
-                    <button class="stroop-btn" style="background:var(--warning-color);" onclick="stroopClick('黄')">黄</button>
-                    <button class="stroop-btn" style="background:var(--purple-color);" onclick="stroopClick('紫')">紫</button>
-                    <button class="stroop-btn" style="background:#111827; color:white; border:1px solid #4b5563" onclick="stroopClick('黑')">黑</button>
+                    <button class="stroop-btn" style="background:var(--danger-color);" onclick="Stroop.click('红')">红</button>
+                    <button class="stroop-btn" style="background:var(--accent-color);" onclick="Stroop.click('蓝')">蓝</button>
+                    <button class="stroop-btn" style="background:var(--success-color);" onclick="Stroop.click('绿')">绿</button>
+                    <button class="stroop-btn" style="background:var(--warning-color);" onclick="Stroop.click('黄')">黄</button>
+                    <button class="stroop-btn" style="background:var(--purple-color);" onclick="Stroop.click('紫')">紫</button>
+                    <button class="stroop-btn" style="background:#111827; color:white; border:1px solid #4b5563" onclick="Stroop.click('黑')">黑</button>
                 </div>
             </div>
         </div>
@@ -1919,7 +1920,7 @@
         function resetAllGames() {
             clearInterval(timerInterval);
             clearInterval(Aim.interval);
-            clearInterval(stInterval);
+            clearInterval(Stroop.interval);
             clearInterval(snakeInterval);
             clearInterval(msTimerInterval);
             if (bkAnimFrame) cancelAnimationFrame(bkAnimFrame);
@@ -1934,7 +1935,7 @@
             Aim.reset();
 
             // Stroop重置
-            stPlaying = false;
+            Stroop.playing = false;
             document.getElementById('stroop-word').innerText = '色彩';
             document.getElementById('stroop-word').style.color = '';
 
@@ -1968,10 +1969,10 @@
                     return;
                 }
             }
-            if (currentView === 'stroop' && stPlaying) {
+            if (currentView === 'stroop' && Stroop.playing) {
                 const keyMap = { 'KeyR': '红', 'KeyG': '绿', 'KeyB': '蓝', 'KeyY': '黄', 'KeyP': '紫', 'KeyK': '黑' };
                 const ans = keyMap[event.code];
-                if (ans) { event.preventDefault(); stroopClick(ans); return; }
+                if (ans) { event.preventDefault(); Stroop.click(ans); return; }
             }
             if (event.code === 'Space') {
                 event.preventDefault();
@@ -1984,7 +1985,7 @@
                 } else if (currentView === 'aim') {
                     if (!Aim.playing) Aim.start();
                 } else if (currentView === 'stroop') {
-                    if (!stPlaying) startStroop();
+                    if (!Stroop.playing) Stroop.start();
                 } else if (currentView === 'moving') {
                     if (!mvPlaying) startMoving();
                 } else if (currentView === 'speedtest') {
@@ -2188,68 +2189,6 @@
                 </div>
             `;
         }
-        // ==========================================
-        // 新增：抗压决策 (Stroop Logic)
-        // ==========================================
-        let stInterval = null, stTime = 0, stProg = 0, stPlaying = false, currentStColor = '';
-        const stWords = ['红','蓝','绿','黄','紫','黑'];
-        const stColors = { '红':'#ef4444', '蓝':'#3b82f6', '绿':'#10b981', '黄':'#eab308', '紫':'#a855f7'};
-
-        function startStroop() {
-            clearInterval(stInterval); stTime = 0; stProg = 0; stPlaying = true;
-            document.getElementById('st-prog').innerText = "0/20"; document.getElementById('st-time').innerText = "0.00";
-            nextStroop();
-            stInterval = setInterval(()=> { 
-                stTime += 0.01; 
-                document.getElementById('st-time').innerText = stTime.toFixed(2); 
-            }, 10);
-        }
-
-        function nextStroop() {
-            const w = stWords[Math.floor(Math.random()*stWords.length)];
-            let cKey;
-            if(Math.random() < 0.8) {
-                let others = stWords.filter(x => x !== w);
-                cKey = others[Math.floor(Math.random()*others.length)];
-            } else { 
-                cKey = w; 
-            }
-            currentStColor = cKey; 
-            const el = document.getElementById('stroop-word');
-            el.innerText = w; 
-            
-            let realC = stColors[cKey];
-            if(cKey === '黑') realC = document.body.classList.contains('dark-mode') ? '#ffffff' : '#111827';
-            el.style.color = realC;
-        }
-
-        function stroopClick(ans) {
-            if(!stPlaying) return;
-            if(ans === currentStColor) {
-                stProg++; document.getElementById('st-prog').innerText = stProg + "/20";
-                if(stProg >= 20) {
-                    stPlaying = false; clearInterval(stInterval);
-                    document.getElementById('stroop-word').innerText = "完成!"; 
-                    document.getElementById('stroop-word').style.color = 'var(--success-color)';
-                    let t = document.getElementById('st-time').innerText;
-                    
-                    let pb = JSON.parse(localStorage.getItem('st_best')||'{}');
-                    if(!pb.time || parseFloat(t) < parseFloat(pb.time)) { 
-                        pb.time = t;
-                        Storage.syncSetItem('st_best', JSON.stringify(pb));
-                        renderExtraPB(); 
-                        updateRadarChart();
-                    }
-                } else { nextStroop(); }
-            } else {
-                Utils.playSound('error', 0, true);
-                stTime += 1.0; 
-                const el = document.getElementById('st-time'); 
-                el.style.color = 'var(--danger-color)'; 
-                setTimeout(()=>el.style.color = 'var(--text-main)', 300);
-            }
-        }
-
         // ==========================================
         // 新增模块：移动飞靶 (Moving Target)
         // ==========================================
