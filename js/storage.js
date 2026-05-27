@@ -169,7 +169,7 @@ window.Storage = (function() {
         Schulte.renderRecords();
         renderRtRecords();
         renderExtraPB();
-        updateRadarChart();
+        Radar.update();
         loadGameData();
       }
       const { data: records } = await client

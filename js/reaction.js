@@ -36,7 +36,7 @@ window.Reaction = (function() {
 
   function handleRtClick(e) {
     if (e) e.preventDefault();
-    if (currentView !== 'reaction' && !routine.active) return;
+    if (currentView !== 'reaction' && !Routine.active) return;
     if (rtState === 'idle') {
       startRtWaiting();
     } else if (rtState === 'waiting') {
@@ -49,7 +49,7 @@ window.Reaction = (function() {
       if (rtResults.length < 5) {
         setRtUI('idle', '⏱️', reactionTime + ' ms', '点击继续下一次', true);
         rtState = 'idle';
-        if (routine && routine.active) setTimeout(handleRtClick, 1000);
+        if (Routine.active) setTimeout(handleRtClick, 1000);
       } else {
         let sum = rtResults.reduce((a, b) => a + b, 0), avg = Math.round(sum / 5);
         let rankDesc = getRtRank(avg);
@@ -57,7 +57,7 @@ window.Reaction = (function() {
         rtTriesDisplay.innerText = '测试完成'; rtState = 'idle';
         saveRtRecord(avg, rankDesc); rtResults = [];
 
-        if (routine && routine.active && routine.step === 3) routineNext('reaction', avg);
+        if (Routine.active) Routine.next('reaction', avg);
       }
     }
   }
@@ -93,7 +93,7 @@ window.Reaction = (function() {
     if (!best || avgMs < best.ms) {
       best = { ms: avgMs, date: dateStr, rank: rankDesc.name, color: rankDesc.color };
       Storage.syncSetItem('rtBest', JSON.stringify(best));
-      updateRadarChart();
+      Radar.update();
     }
     renderRtRecords();
   }
@@ -126,7 +126,7 @@ window.Reaction = (function() {
   function clearRtRecords() {
     if (confirm('确定要清空极限反应的生涯数据吗？')) {
       localStorage.removeItem('rtRecords'); localStorage.removeItem('rtBest'); renderRtRecords();
-      updateRadarChart();
+      Radar.update();
     }
   }
 

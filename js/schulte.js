@@ -159,7 +159,7 @@ window.Schulte = (function() {
     saveRecord(finalTime, rank, tagStr); renderHeatmap();
 
     // TODO: 后续由 Routine 模块接管
-    if(typeof routine !== 'undefined' && routine.active && routine.step === 1) routineNext('schulte', parseFloat(finalTime));
+    if(Routine.active) Routine.next('schulte', parseFloat(finalTime));
   }
 
   function saveRecord(timeStr, rank, tagStr) {
@@ -177,7 +177,7 @@ window.Schulte = (function() {
       bests[sizeStr] = { time: timeStr, rank: rank, date: dateStr, tags: tagStr };
       Storage.syncSetItem('schulteBests', JSON.stringify(bests));
       // TODO: 后续由 Radar 模块接管
-      if(typeof updateRadarChart === 'function') updateRadarChart();
+      if(typeof Radar !== 'undefined') Radar.update();
     }
     renderRecords(); drawChart();
   }
@@ -212,7 +212,7 @@ window.Schulte = (function() {
     if(confirm("确定要清空索敌模式所有记录吗？")) {
       localStorage.removeItem('schulteRecords'); localStorage.removeItem('schulteBests'); renderRecords();
       // TODO: 后续由 Radar 模块接管
-      if(typeof updateRadarChart === 'function') updateRadarChart();
+      if(typeof Radar !== 'undefined') Radar.update();
     }
   }
 

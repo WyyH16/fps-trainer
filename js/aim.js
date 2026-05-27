@@ -76,9 +76,9 @@ window.Aim = (function() {
       pb.hits = hits;
       Storage.syncSetItem('aim_best', JSON.stringify(pb));
       renderExtraPB();
-      updateRadarChart();
+      Radar.update();
     }
-    if (routine.active && routine.step === 2) routineNext('aim', hits);
+    if (Routine.active) Routine.next('aim', hits);
   }
 
   function reset() {

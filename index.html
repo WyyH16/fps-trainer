@@ -10,6 +10,7 @@
     <script src="js/storage.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/leaderboard.js"></script>
+    <script src="js/radar.js"></script>
     <script src="js/schulte.js"></script>
     <script src="js/reaction.js"></script>
     <script src="js/aim.js"></script>
@@ -21,6 +22,7 @@
     <script src="js/minesweeper.js"></script>
     <script src="js/breakout.js"></script>
     <script src="js/entertainment.js"></script>
+    <script src="js/routine.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -252,7 +254,7 @@
                             2. 精准拉枪 (30秒限时)<br>
                             3. 极限反射 (5次测算)
                         </div>
-                        <button class="btn-action" onclick="startRoutine()">🚀 一键启动热身</button>
+                        <button class="btn-action" onclick="Routine.start()">🚀 一键启动热身</button>
                     </div>
                 </div>
                 <div class="module-card" id="routine-result-card" style="display: none;">
@@ -627,7 +629,7 @@
 
             // 切换时重置所有进行中的游戏
             resetAllGames();
-            if (view === 'overview') { updateRadarChart(); LB.fetchMini(); }
+            if (view === 'overview') { Radar.update(); LB.fetchMini(); }
             if (LB.MODULE_MAP[view]) { LB.fetchModule(view); }
 
             // GSAP stagger entrance for cards and panels
@@ -640,7 +642,7 @@
 
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
-            if(currentView === 'overview') updateRadarChart();
+            if(currentView === 'overview') Radar.update();
         }
 
         function loadWeather() {
@@ -778,7 +780,7 @@
             Schulte.renderRecords();
             Reaction.renderRecords();
             renderExtraPB();
-            updateRadarChart();
+            Radar.update();
             Entertainment.loadGameData();
             loadWeather();
             Entertainment.selectGame('snake');
@@ -801,174 +803,6 @@
             if(mvPbEl) mvPbEl.innerText = mvBest.score ? mvBest.score : '--';
         }
 
-        // ================= 雷达图引擎 (六边形战士) =================
-        function updateRadarChart() {
-            const cvs = document.getElementById('radarChart');
-            if(!cvs) return;
-            const container = cvs.parentElement;
-            
-            const size = container.clientWidth || 300;
-            const dpr = window.devicePixelRatio || 1;
-            
-            cvs.width = size * dpr;
-            cvs.height = size * dpr;
-            cvs.style.width = size + 'px';
-            cvs.style.height = size + 'px';
-            
-            const ctx = cvs.getContext('2d');
-            ctx.scale(dpr, dpr);
-
-            const isDark = document.body.classList.contains('dark-mode');
-            const gridColor = isDark ? '#4b5563' : '#d1d5db';
-            const textColor = isDark ? '#9ca3af' : '#6b7280';
-            const fillColor = 'rgba(59, 130, 246, 0.4)';
-            const strokeColor = '#3b82f6';
-
-            // 6 个维度
-            let scores = [50, 50, 50, 50, 50, 50];
-            
-            let scBests = JSON.parse(localStorage.getItem('schulteBests') || '{}');
-            let scT = scBests['5x5'] ? parseFloat(scBests['5x5'].time) : 50; 
-            scores[0] = Math.max(5, Math.min(100, 100 - (scT - 15) * 4));
-
-            let rtBest = JSON.parse(localStorage.getItem('rtBest') || 'null');
-            let rtT = rtBest ? parseInt(rtBest.ms) : 400; 
-            scores[1] = Math.max(5, Math.min(100, 100 - (rtT - 160) * 0.625));
-
-            let aimBest = JSON.parse(localStorage.getItem('aim_best') || '{}');
-            let aimH = parseInt(aimBest.hits || 0);
-            scores[2] = Math.max(5, Math.min(100, (aimH - 10) * 2.85));
-
-            let mvBest = JSON.parse(localStorage.getItem('mv_best') || '{}');
-            let mvScore = parseInt(mvBest.score || 0);
-            scores[3] = Math.max(5, Math.min(100, (mvScore / 40) * 100)); // 设定40分为100%
-
-            let stBest = JSON.parse(localStorage.getItem('st_best') || '{}');
-            let stT = parseFloat(stBest.time || 40);
-            scores[4] = Math.max(5, Math.min(100, 100 - (stT - 12) * 5.5));
-
-            scores[5] = (scores[0]+scores[1]+scores[2]+scores[3]+scores[4]) / 5;
-
-            const labels = ['视野索敌(方格)', '反射神经(反应)', '定位准度(甩枪)', '动态跟枪(飞靶)', '抗压决策(颜色)', '综合潜能'];
-            const sides = 6;
-            const cx = size / 2, cy = size / 2;
-            const radius = Math.min(cx, cy) - 45;
-
-            ctx.lineWidth = 1; ctx.strokeStyle = gridColor;
-            for (let level = 1; level <= 5; level++) {
-                let r = radius * (level / 5);
-                ctx.beginPath();
-                for (let i = 0; i < sides; i++) {
-                    let angle = i * 2 * Math.PI / sides - Math.PI / 2;
-                    let x = cx + r * Math.cos(angle), y = cy + r * Math.sin(angle);
-                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-                }
-                ctx.closePath(); ctx.stroke();
-            }
-
-            ctx.font = "bold 11px sans-serif"; ctx.fillStyle = textColor; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            for (let i = 0; i < sides; i++) {
-                let angle = i * 2 * Math.PI / sides - Math.PI / 2;
-                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)); ctx.stroke();
-                let lx = cx + (radius + 25) * Math.cos(angle), ly = cy + (radius + 20) * Math.sin(angle);
-                ctx.fillText(labels[i], lx, ly);
-            }
-
-            ctx.beginPath();
-            for (let i = 0; i < sides; i++) {
-                let angle = i * 2 * Math.PI / sides - Math.PI / 2;
-                let valR = radius * (scores[i] / 100);
-                let x = cx + valR * Math.cos(angle), y = cy + valR * Math.sin(angle);
-                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-            }
-            ctx.closePath();
-            ctx.fillStyle = fillColor; ctx.fill();
-            ctx.lineWidth = 2; ctx.strokeStyle = strokeColor; ctx.stroke();
-            
-            ctx.fillStyle = strokeColor;
-            for (let i = 0; i < sides; i++) {
-                let angle = i * 2 * Math.PI / sides - Math.PI / 2;
-                let valR = radius * (scores[i] / 100);
-                ctx.beginPath(); ctx.arc(cx + valR * Math.cos(angle), cy + valR * Math.sin(angle), 4, 0, Math.PI*2); ctx.fill();
-            }
-        }
-
-        // ================= 实战热身 (Routine Manager) =================
-        let routine = { active: false, step: 0, scores: {} };
-        
-        function startRoutine() {
-            routine = { active: true, step: 1, scores: {} };
-            document.getElementById('routine-result-card').style.display = 'none';
-            // Step 1: Schulte 4x4
-            switchView('schulte');
-            document.getElementById('grid-size').value = 4;
-            document.getElementById('countdown').value = 3;
-            document.getElementById('mode-blind').checked = false;
-            document.getElementById('mode-distract').checked = false;
-            Schulte.prepare();
-        }
-
-        function routineNext(module, result) {
-            if(!routine.active) return;
-            routine.scores[module] = result;
-            routine.step++;
-            
-            setTimeout(() => {
-                if (routine.step === 2) {
-                    switchView('aim');
-                    Aim.start();
-                } else if (routine.step === 3) {
-                    switchView('reaction');
-                    Reaction.state = 'idle'; // Reset reaction
-                    Reaction.handleClick(); // Auto start wait
-                } else {
-                    finishRoutine();
-                }
-            }, 1000);
-        }
-
-        function finishRoutine() {
-            routine.active = false;
-            switchView('overview');
-            document.getElementById('routine-result-card').style.display = 'block';
-            
-            // 计算综合状态得分
-            let s1 = Math.max(0, 100 - Math.max(0, routine.scores.schulte - 10) * 5); // 4x4 基准 10s
-            let s2 = Math.min(100, Math.max(0, routine.scores.aim / 15 * 100)); // 15 命为优秀参考
-            let s3 = Math.max(0, 100 - Math.max(0, routine.scores.reaction - 150) * 0.85); // 150ms 基准
-            let finalScore = Math.round((s1 + s2 + s3) / 3);
-            let statusText = '';
-            let statusColor = 'var(--text-main)';
-            if (finalScore >= 90) {
-                statusText = '当前状态极佳，适合直接参加排位竞技。';
-                statusColor = '#10b981';
-            } else if (finalScore >= 80) {
-                statusText = '状态良好，可尝试排位，有一定竞技把握。';
-                statusColor = '#3b82f6';
-            } else if (finalScore >= 70) {
-                statusText = '可适度参加排位，建议先再热身一局。';
-                statusColor = '#f59e0b';
-            } else {
-                statusText = '建议继续训练再排位，当前状态尚不稳定。';
-                statusColor = '#ef4444';
-            }
-            let readyTag = finalScore >= 80 ? '建议参加' : '建议暂缓';
-            let readyBg = finalScore >= 80 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
-
-            document.getElementById('routine-result-content').innerHTML = `
-                <div style="font-size:36px; font-weight:900; color:var(--accent-color); text-align:center;">${finalScore} <span style="font-size:16px; color:var(--text-sub);">分</span></div>
-                <div style="text-align:center; margin-top: 8px; margin-bottom: 16px; color: ${statusColor}; font-weight: 700;">${statusText}</div>
-                <div style="text-align:center; margin-bottom: 15px;
-                    display:inline-flex; align-items:center; justify-content:center; padding:8px 14px; border-radius:999px; background:${readyBg}; color:${statusColor}; font-weight:700; font-size:14px;">
-                    ${readyTag} 排位竞技
-                </div>
-                <div class="stat-grid">
-                    <div class="stat-box"><div style="font-size:12px;">索敌(4x4)</div><div class="stat-val" style="color:var(--text-main); font-size:16px;">${routine.scores.schulte}s</div></div>
-                    <div class="stat-box"><div style="font-size:12px;">甩枪命中</div><div class="stat-val" style="color:var(--text-main); font-size:16px;">${routine.scores.aim}</div></div>
-                    <div class="stat-box" style="grid-column: 1 / -1;"><div style="font-size:12px;">平均反应</div><div class="stat-val" style="color:var(--text-main); font-size:16px;">${routine.scores.reaction}ms</div></div>
-                </div>
-            `;
-        }
     </script>
 </body>
 </html>

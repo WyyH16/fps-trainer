@@ -46,7 +46,7 @@ window.Stroop = (function() {
           pb.time = t;
           Storage.syncSetItem('st_best', JSON.stringify(pb));
           if (typeof renderExtraPB === 'function') renderExtraPB();
-          if (typeof updateRadarChart === 'function') updateRadarChart();
+          if (typeof Radar !== 'undefined') Radar.update();
         }
       } else { nextWord(); }
     } else {

@@ -103,7 +103,7 @@ window.Moving = (function() {
       pb.score = score;
       Storage.syncSetItem('mv_best', JSON.stringify(pb));
       renderExtraPB();
-      updateRadarChart();
+      Radar.update();
     }
   }
 
