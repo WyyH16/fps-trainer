@@ -1,7 +1,7 @@
 window.Stroop = (function() {
   let interval = null, time = 0, prog = 0, playing = false, currentColor = '';
   const words = ['红','蓝','绿','黄','紫','黑'];
-  const colors = { '红':'#ef4444', '蓝':'#3b82f6', '绿':'#10b981', '黄':'#eab308', '紫':'#a855f7'};
+  const colors = { '红':'#f04444', '蓝':'#3b82f6', '绿':'#20d060', '黄':'#eab308', '紫':'#a070e0'};
 
   function start() {
     clearInterval(interval); time = 0; prog = 0; playing = true;
@@ -27,7 +27,9 @@ window.Stroop = (function() {
     el.innerText = w;
 
     let realC = colors[cKey];
-    if(cKey === '黑') realC = document.body.classList.contains('dark-mode') ? '#ffffff' : '#111827';
+    if(cKey === '黑') {
+      realC = document.body.classList.contains('dark-mode') ? '#6b7280' : '#111827';
+    }
     el.style.color = realC;
   }
 
@@ -45,7 +47,7 @@ window.Stroop = (function() {
         if(!pb.time || parseFloat(t) < parseFloat(pb.time)) {
           pb.time = t;
           Storage.syncSetItem('st_best', JSON.stringify(pb));
-          if (typeof renderExtraPB === 'function') renderExtraPB();
+          if (typeof App !== 'undefined' && App.renderExtraPB) App.renderExtraPB();
           if (typeof Radar !== 'undefined') Radar.update();
         }
       } else { nextWord(); }

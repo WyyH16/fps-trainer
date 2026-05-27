@@ -4,11 +4,7 @@ window.Reaction = (function() {
   let rtStartTime = 0;
   let rtResults = [];
 
-  const rtPad = document.getElementById('reaction-pad');
-  const rtIcon = document.getElementById('reaction-icon');
-  const rtMsg = document.getElementById('reaction-msg');
-  const rtSub = document.getElementById('reaction-sub');
-  const rtTriesDisplay = document.getElementById('reaction-tries');
+  var rtPad = null, rtIcon = null, rtMsg = null, rtSub = null, rtTriesDisplay = null;
 
   function resetRt() {
     clearTimeout(rtTimeout); rtState = 'idle'; rtResults = [];
@@ -16,6 +12,13 @@ window.Reaction = (function() {
   }
 
   function setRtUI(stateClass, icon, msg, sub, showTries) {
+    if (!rtPad) {
+      rtPad = document.getElementById('reaction-pad');
+      rtIcon = document.getElementById('reaction-icon');
+      rtMsg = document.getElementById('reaction-msg');
+      rtSub = document.getElementById('reaction-sub');
+      rtTriesDisplay = document.getElementById('reaction-tries');
+    }
     rtPad.className = ''; rtPad.classList.add('rt-' + stateClass);
     rtIcon.innerText = icon; rtMsg.innerText = msg; rtSub.innerText = sub;
     rtTriesDisplay.style.display = showTries ? 'block' : 'none';

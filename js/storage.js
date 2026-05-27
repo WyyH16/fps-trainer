@@ -168,7 +168,7 @@ window.Storage = (function() {
         mergeCloudBests(bests);
         Schulte.renderRecords();
         renderRtRecords();
-        renderExtraPB();
+        App.renderExtraPB();
         Radar.update();
         loadGameData();
       }

@@ -17,8 +17,13 @@ window.App = (function() {
     // GSAP stagger entrance for cards and panels
     const children = viewEl.querySelectorAll('.module-card, .schulte-center, .rt-center, .aim-center, .stroop-center, .moving-center, .overview-center, .entertainment-small');
     gsap.fromTo(children,
-      { opacity: 0, y: 18 },
-      { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, ease: 'power2.out' }
+      { opacity: 0, y: 20, filter: 'blur(2px)' },
+      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, stagger: 0.05, ease: 'power3.out' }
+    );
+    // Header accent flash
+    gsap.fromTo('.header-wrap',
+      { borderBottomColor: 'transparent' },
+      { borderBottomColor: 'var(--accent-color)', duration: 0.6, ease: 'power2.out' }
     );
   }
 
@@ -49,7 +54,7 @@ window.App = (function() {
 
   function fetchWeather(lat, lon) {
     const weatherEl = document.getElementById('weather-info');
-    weatherEl.innerText = '天气加载中…';
+    weatherEl.innerText = 'SYS: ACQUIRING DATA...';
     fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`)
       .then(res => res.json())
       .then(data => {
@@ -63,19 +68,19 @@ window.App = (function() {
           localStorage.setItem('weather_cache', JSON.stringify(item));
           renderWeather(item);
         } else {
-          weatherEl.innerText = '天气数据获取失败';
+          weatherEl.innerText = 'SYS: DATA ACQUISITION FAILED';
         }
       })
       .catch(() => {
         if (!weatherEl.innerText || weatherEl.innerText === '天气加载中…') {
-          weatherEl.innerText = '天气加载失败，离线显示缓存';
+          weatherEl.innerText = 'SYS: OFFLINE — CACHED DATA';
         }
       });
   }
 
   function renderWeather(item) {
     const weatherEl = document.getElementById('weather-info');
-    weatherEl.innerText = `今日天气：${item.summary} ${item.temp}°C`;
+    weatherEl.innerText = 'SYS: ' + item.summary + ' ' + item.temp + '°C';
     if (item.max !== null && item.min !== null) {
       weatherEl.innerText += ` | ${item.min}°/${item.max}°`;
     }
@@ -111,10 +116,9 @@ window.App = (function() {
     const mvOverlay = document.getElementById('moving-overlay');
     if (mvOverlay) {
       mvOverlay.style.display = 'flex';
-      mvOverlay.style.background = 'rgba(255, 255, 255, 0.9)'; // Reset color
-      if (document.body.classList.contains('dark-mode')) mvOverlay.style.background = 'rgba(31, 41, 55, 0.9)';
-      mvOverlay.style.color = 'var(--danger-color)';
-      mvOverlay.innerHTML = '点击START开始<br><span style="font-size:16px; margin-top:10px;">拦截所有移动目标</span>';
+      mvOverlay.style.background = '';
+      mvOverlay.style.color = '';
+      mvOverlay.innerHTML = '<div class="overlay-title">TARGET INTERCEPT</div><div class="overlay-sub">INTERCEPT ALL MOVING TARGETS</div><div class="overlay-action" onclick="Moving.start()">PRESS START TO DEPLOY</div>';
     }
     SpeedTest.stop();
   }
@@ -144,6 +148,15 @@ window.App = (function() {
     let mvBest = JSON.parse(localStorage.getItem('mv_best') || '{}');
     let mvPbEl = document.getElementById('mv-pb');
     if (mvPbEl) mvPbEl.innerText = mvBest.score ? mvBest.score : '--';
+  }
+
+  function celebratePB(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    gsap.fromTo(el,
+      { scale: 1, textShadow: '0 0 0px var(--accent-glow)' },
+      { scale: 1.08, textShadow: '0 0 20px var(--accent-glow)', duration: 0.3, yoyo: true, repeat: 2, ease: 'power2.inOut' }
+    );
   }
 
   // Keyboard listener
@@ -190,6 +203,8 @@ window.App = (function() {
     switchView: switchView,
     toggleTheme: toggleTheme,
     resetAllGames: resetAllGames,
+    celebratePB: celebratePB,
+    renderExtraPB: renderExtraPB,
     init: init,
     get currentView() { return currentView; }
   };

@@ -178,7 +178,7 @@ window.Breakout = (function() {
   function drawBreakout() {
     if (!bkCtx) return;
     var w = bkCanvas.width, h = bkCanvas.height;
-    bkCtx.fillStyle = '#0f172a';
+    bkCtx.fillStyle = '#080d13';
     bkCtx.fillRect(0, 0, w, h);
     // Draw bricks
     for (var i = 0; i < bkBricks.length; i++) {
@@ -245,14 +245,15 @@ window.Breakout = (function() {
     }
     bkCtx.globalAlpha = 1;
     if (!bkPlaying && bkLives <= 0) {
-      bkCtx.fillStyle = 'rgba(0,0,0,0.7)';
+      bkCtx.fillStyle = 'rgba(8, 13, 19, 0.85)';
       bkCtx.fillRect(0, 0, w, h);
-      bkCtx.fillStyle = '#f8fafc';
-      bkCtx.font = 'bold 28px sans-serif';
+      bkCtx.fillStyle = '#f0a500';
+      bkCtx.font = 'bold 28px "Rajdhani", sans-serif';
       bkCtx.textAlign = 'center';
-      bkCtx.fillText('游戏结束', w / 2, h / 2 - 10);
-      bkCtx.font = '16px sans-serif';
-      bkCtx.fillText('得分: ' + bkScore + ' | 点击重置再来一局', w / 2, h / 2 + 30);
+      bkCtx.fillText('MISSION FAILED', w / 2, h / 2 - 10);
+      bkCtx.fillStyle = '#dce3ea';
+      bkCtx.font = '14px "Share Tech Mono", monospace';
+      bkCtx.fillText('SCORE: ' + bkScore + ' | PRESS RESET TO REDEPLOY', w / 2, h / 2 + 30);
     }
   }
 
@@ -321,7 +322,7 @@ window.Breakout = (function() {
   function drawIdle() {
     if (!bkCtx) return;
     var w = bkCanvas.width, h = bkCanvas.height;
-    bkCtx.fillStyle = '#0f172a';
+    bkCtx.fillStyle = '#080d13';
     bkCtx.fillRect(0, 0, w, h);
     // Draw bricks
     for (var i = 0; i < bkBricks.length; i++) {
@@ -339,10 +340,10 @@ window.Breakout = (function() {
     bkCtx.arc(bkBallX, bkBallY, bkBallR, 0, Math.PI * 2);
     bkCtx.fill();
     // Message
-    bkCtx.fillStyle = 'rgba(248,250,252,0.7)';
-    bkCtx.font = 'bold 18px sans-serif';
+    bkCtx.fillStyle = 'rgba(220, 227, 234, 0.5)';
+    bkCtx.font = 'bold 16px "Share Tech Mono", monospace';
     bkCtx.textAlign = 'center';
-    bkCtx.fillText('点击"开始"或按空格键', w / 2, h / 2 + 40);
+    bkCtx.fillText('[ PRESS START OR SPACE TO DEPLOY ]', w / 2, h / 2 + 40);
   }
 
   // ============ 公开 API ============

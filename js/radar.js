@@ -16,10 +16,12 @@ window.Radar = (function() {
     ctx.scale(dpr, dpr);
 
     const isDark = document.body.classList.contains('dark-mode');
-    const gridColor = isDark ? '#4b5563' : '#d1d5db';
-    const textColor = isDark ? '#9ca3af' : '#6b7280';
-    const fillColor = 'rgba(59, 130, 246, 0.4)';
-    const strokeColor = '#3b82f6';
+    const gridColor = isDark ? '#1a2a3a' : '#bcc8d4';
+    const textColor = isDark ? '#5a6e80' : '#4a5c6e';
+    const fillColor = isDark ? 'rgba(240, 165, 0, 0.25)' : 'rgba(192, 114, 14, 0.25)';
+    const strokeColor = isDark ? '#f0a500' : '#c0720e';
+    const pointColor = isDark ? '#f0a500' : '#c0720e';
+    const fontStack = '600 11px "Rajdhani", "Noto Sans SC", sans-serif';
 
     // 6 个维度
     let scores = [50, 50, 50, 50, 50, 50];
@@ -63,7 +65,8 @@ window.Radar = (function() {
       ctx.closePath(); ctx.stroke();
     }
 
-    ctx.font = "bold 11px sans-serif"; ctx.fillStyle = textColor; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = fontStack;
+    ctx.fillStyle = textColor; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     for (let i = 0; i < sides; i++) {
       let angle = i * 2 * Math.PI / sides - Math.PI / 2;
       ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)); ctx.stroke();

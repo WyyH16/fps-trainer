@@ -114,9 +114,9 @@ window.Snake = (function() {
     var cell = w / cols;
 
     // background with subtle grid
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#080d13';
     ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = 'rgba(30,41,59,0.6)';
+    ctx.strokeStyle = 'rgba(26, 42, 58, 0.6)';
     ctx.lineWidth = 0.5;
     for (var i = 0; i <= cols; i++) {
       ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, h); ctx.stroke();

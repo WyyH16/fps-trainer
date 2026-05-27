@@ -45,23 +45,23 @@ window.Routine = (function() {
     let statusText = '';
     let statusColor = 'var(--text-main)';
     if (finalScore >= 90) {
-      statusText = '当前状态极佳，适合直接参加排位竞技。';
-      statusColor = '#10b981';
+      statusText = 'PEAK CONDITION: Ready for ranked deployment.';
+      statusColor = '#20d060';
     } else if (finalScore >= 80) {
-      statusText = '状态良好，可尝试排位，有一定竞技把握。';
-      statusColor = '#3b82f6';
+      statusText = 'COMBAT READY: Suitable for ranked engagement.';
+      statusColor = '#f0a500';
     } else if (finalScore >= 70) {
-      statusText = '可适度参加排位，建议先再热身一局。';
-      statusColor = '#f59e0b';
+      statusText = 'CONDITION FAIR: Additional warm-up advised.';
+      statusColor = '#f0a500';
     } else {
-      statusText = '建议继续训练再排位，当前状态尚不稳定。';
-      statusColor = '#ef4444';
+      statusText = 'FURTHER TRAINING ADVISED: Unstable performance.';
+      statusColor = '#f04444';
     }
-    let readyTag = finalScore >= 80 ? '建议参加' : '建议暂缓';
-    let readyBg = finalScore >= 80 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+    let readyTag = finalScore >= 80 ? 'DEPLOY RECOMMENDED' : 'TRAINING ADVISED';
+    let readyBg = finalScore >= 80 ? 'rgba(32,208,96,0.12)' : 'rgba(240,68,68,0.12)';
 
     document.getElementById('routine-result-content').innerHTML = `
-      <div style="font-size:36px; font-weight:900; color:var(--accent-color); text-align:center;">${finalScore} <span style="font-size:16px; color:var(--text-sub);">分</span></div>
+      <div style="font-family:var(--font-display); font-size:36px; font-weight:700; color:var(--accent-color); text-align:center;">${finalScore} <span style="font-size:16px; color:var(--text-sub);">PTS</span></div>
       <div style="text-align:center; margin-top: 8px; margin-bottom: 16px; color: ${statusColor}; font-weight: 700;">${statusText}</div>
       <div style="text-align:center; margin-bottom: 15px;
         display:inline-flex; align-items:center; justify-content:center; padding:8px 14px; border-radius:999px; background:${readyBg}; color:${statusColor}; font-weight:700; font-size:14px;">

@@ -37,6 +37,8 @@ window.Aim = (function() {
     t.style.left = (Math.random() * (aBox.clientWidth - size) + size / 2) + 'px';
     t.style.top = (Math.random() * (aBox.clientHeight - size) + size / 2) + 'px';
 
+    gsap.fromTo(t, { scale: 0.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.15, ease: 'power2.out' });
+
     t.onmousedown = function(e) {
       e.stopPropagation();
       if (!playing) return;
@@ -69,13 +71,13 @@ window.Aim = (function() {
     overlay.style.display = 'flex';
     overlay.style.background = 'rgba(0,0,0,0.8)';
     overlay.style.color = 'white';
-    overlay.innerHTML = '测试结束<br><span style="font-size:16px; margin-top:10px;">命中: ' + hits + ' | 准确率: ' + document.getElementById('aim-acc').innerText + '</span><br><span style="font-size:14px; margin-top:10px; cursor:pointer;" onclick="Aim.start()">点击此处或左侧重新开始</span>';
+    overlay.innerHTML = '<div class="overlay-title">MISSION COMPLETE</div><div class="overlay-stats">HITS: ' + hits + ' | ACC: ' + document.getElementById('aim-acc').innerText + '</div><div class="overlay-action" onclick="Aim.start()">[ CLICK TO REARM ]</div>';
 
     var pb = JSON.parse(localStorage.getItem('aim_best') || '{}');
     if (!pb.hits || hits > pb.hits) {
       pb.hits = hits;
       Storage.syncSetItem('aim_best', JSON.stringify(pb));
-      renderExtraPB();
+      App.renderExtraPB();
       Radar.update();
     }
     if (Routine.active) Routine.next('aim', hits);
@@ -90,7 +92,7 @@ window.Aim = (function() {
     var aimOverlay = document.getElementById('aim-overlay');
     if (aimOverlay) {
       aimOverlay.style.display = 'flex';
-      aimOverlay.innerHTML = '点击START开始<br><span style="font-size:16px; margin-top:10px;">30秒定点甩枪</span>';
+      aimOverlay.innerHTML = '<div class="overlay-title">AIM TRAINING</div><div class="overlay-sub">30-SECOND ENGAGEMENT</div><div class="overlay-action" onclick="Aim.start()">PRESS START TO DEPLOY</div>';
     }
   }
 

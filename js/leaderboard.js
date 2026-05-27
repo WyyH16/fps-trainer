@@ -63,7 +63,7 @@ window.LB = (function() {
   async function fetchLeaderboard(containerId) {
     const el = document.getElementById(containerId);
     if (!el) return;
-    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-sub);">加载中...</div>';
+    el.innerHTML = '<div class="loading-indicator">[ ACCESSING DATABASE... ]</div>';
     const client = Storage.getSupabase();
     if (!client) {
       el.innerHTML = '<div class="empty-records">云端未连接</div>';
@@ -110,7 +110,7 @@ window.LB = (function() {
     if (!cfg) return;
     var el = document.getElementById(cfg.container);
     if (!el) return;
-    el.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-sub);font-size:12px;">加载中...</div>';
+    el.innerHTML = '<div class="loading-indicator">[ ACCESSING DATABASE... ]</div>';
     var client = Storage.getSupabase();
     if (!client) { el.innerHTML = '<div class="empty-records">云端未连接</div>'; return; }
     try {

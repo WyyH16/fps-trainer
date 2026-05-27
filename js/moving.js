@@ -57,7 +57,7 @@ window.Moving = (function() {
       gsap.killTweensOf(el);
       targets = targets.filter(item => item.el !== el);
       // scale-pop then remove
-      gsap.fromTo(el, { scale: 1.3 }, { scale: 0, duration: 0.15, ease: 'power2.in', onComplete: () => {
+      gsap.fromTo(el, { scale: 1.3, boxShadow: '0 0 20px var(--success-color)' }, { scale: 0, boxShadow: '0 0 0px var(--success-color)', duration: 0.2, ease: 'power2.in', onComplete: () => {
         if (el.parentNode) el.remove();
       }});
     });
@@ -96,13 +96,13 @@ window.Moving = (function() {
     overlay.style.display = 'flex';
     overlay.style.background = 'rgba(0,0,0,0.8)';
     overlay.style.color = 'white';
-    overlay.innerHTML = '行动失败<br><span style="font-size:16px; margin-top:10px;">最终拦截得分: <span style="color:var(--warning-color); font-weight:bold; font-size:20px;">' + score + '</span></span><br><span style="font-size:14px; margin-top:10px; cursor:pointer;" onclick="Moving.start()">点击此处或左侧重新开始</span>';
+    overlay.innerHTML = '<div class="overlay-title">INTERCEPT FAILED</div><div class="overlay-stats"><span style="display:block;font-size:28px;color:var(--warning-color);">' + score + '</span><span>FINAL SCORE</span></div><div class="overlay-action" onclick="Moving.start()">[ CLICK TO REDEPLOY ]</div>';
 
     let pb = JSON.parse(localStorage.getItem('mv_best') || '{}');
     if (!pb.score || score > pb.score) {
       pb.score = score;
       Storage.syncSetItem('mv_best', JSON.stringify(pb));
-      renderExtraPB();
+      App.renderExtraPB();
       Radar.update();
     }
   }

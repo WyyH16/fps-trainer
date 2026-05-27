@@ -59,7 +59,7 @@ window.Schulte = (function() {
     } else {
       overlay.style.background = '';
       overlay.style.backdropFilter = '';
-      cdText.style.textShadow = '0 4px 10px rgba(0,0,0,0.2)';
+      cdText.style.textShadow = '';
     }
 
     overlay.style.display = 'flex';
@@ -109,6 +109,11 @@ window.Schulte = (function() {
       cell.addEventListener('touchstart', clickHandler, {passive: false});
       gridEl.appendChild(cell);
     });
+    // Grid power-on stagger entrance
+    gsap.fromTo(gridEl.children,
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.3, stagger: { each: 0.03, from: 'random' }, ease: 'back.out(1.5)' }
+    );
   }
 
   function start() {

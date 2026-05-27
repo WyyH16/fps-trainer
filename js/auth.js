@@ -143,10 +143,10 @@ window.Auth = (function() {
       btn.className = 'auth-btn logged-in';
       var flag = Utils.countryToFlag(currentUser.country);
       var display = flag + ' ' + currentUser.username;
-      btn.innerHTML = '<span class="user-badge">☁️ ' + display + ' <span class="logout-link" onclick="event.stopPropagation();Auth.logout()">退出</span></span>';
+      btn.innerHTML = '<span class="user-badge">' + display + ' <span class="logout-link" onclick="event.stopPropagation();Auth.logout()">LOGOUT</span></span>';
     } else {
       btn.className = 'auth-btn';
-      btn.innerText = '👤 登录同步';
+      btn.innerText = 'LOGIN / SYNC';
     }
   }
 

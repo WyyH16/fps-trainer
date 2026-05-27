@@ -8,15 +8,18 @@ window.SpeedTest = (function() {
   const BEST_KEY = 'speedtest_best_cps';
   const RECORDS_KEY = 'speedRecords';
 
-  // Cached DOM refs
-  const timeEl = document.getElementById('speed-time');
-  const clicksEl = document.getElementById('speed-clicks');
-  const cpsEl = document.getElementById('speed-cps');
-  const bestEl = document.getElementById('speed-best');
-  const bestRecordEl = document.getElementById('speed-best-record');
-  const clickBtn = document.getElementById('speed-click-btn');
+  // Cached DOM refs (lazy init — scripts load before DOM)
+  var timeEl = null, clicksEl = null, cpsEl = null, bestEl = null, bestRecordEl = null, clickBtn = null;
 
   function updateUI() {
+    if (!timeEl) {
+      timeEl = document.getElementById('speed-time');
+      clicksEl = document.getElementById('speed-clicks');
+      cpsEl = document.getElementById('speed-cps');
+      bestEl = document.getElementById('speed-best');
+      bestRecordEl = document.getElementById('speed-best-record');
+      clickBtn = document.getElementById('speed-click-btn');
+    }
     if (timeEl) timeEl.innerText = remaining.toFixed(2);
     if (clicksEl) clicksEl.innerText = clicks;
     const elapsed = Math.max(0.001, 5.00 - remaining);
