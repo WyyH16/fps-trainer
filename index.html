@@ -12,6 +12,7 @@
     <script src="js/leaderboard.js"></script>
     <script src="js/schulte.js"></script>
     <script src="js/reaction.js"></script>
+    <script src="js/aim.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -374,7 +375,7 @@
                         <div class="stat-box"><div style="font-size:12px;">准确率</div><div class="stat-val" id="aim-acc">0%</div></div>
                     </div>
                 </div>
-                <button class="btn-action" onclick="startAim()">START 启动甩枪</button>
+                <button class="btn-action" onclick="Aim.start()">START 启动甩枪</button>
                 <div class="module-card" style="margin-top: 20px;">
                     <h3 class="module-title">🏆 甩枪 PB</h3>
                     <div class="stat-box"><div style="font-size:12px;">历史最高命中</div><div class="stat-val" id="aim-pb-hits">--</div></div>
@@ -388,7 +389,7 @@
                 <div class="game-header">
                     <div>TIME: <span id="aim-time" class="hud-val hud-target">30.0</span>s</div>
                 </div>
-                <div id="aim-container" onmousedown="aimMiss(event)">
+                <div id="aim-container" onmousedown="Aim.miss(event)">
                     <div id="aim-overlay" style="position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; background:rgba(0,0,0,0.6); z-index:10; font-size:24px; text-align:center;">
                         点击左侧启动<br><span style="font-size:16px; margin-top:10px;">30秒定点甩枪</span>
                     </div>
@@ -1917,7 +1918,7 @@
 
         function resetAllGames() {
             clearInterval(timerInterval);
-            clearInterval(aimInterval);
+            clearInterval(Aim.interval);
             clearInterval(stInterval);
             clearInterval(snakeInterval);
             clearInterval(msTimerInterval);
@@ -1929,14 +1930,8 @@
             Schulte.isPlaying = false;
             document.getElementById('overlay').style.display = 'none';
             
-            // Aim重置 
-            aimPlaying = false;
-            document.querySelectorAll('.aim-target').forEach(el => el.remove());
-            const aimOverlay = document.getElementById('aim-overlay');
-            if(aimOverlay){
-                aimOverlay.style.display = 'flex';
-                aimOverlay.innerHTML = '点击START开始<br><span style="font-size:16px; margin-top:10px;">30秒定点甩枪</span>';
-            }
+            // Aim重置
+            Aim.reset();
 
             // Stroop重置
             stPlaying = false;
@@ -1987,7 +1982,7 @@
                 } else if (currentView === 'reaction') {
                     Reaction.handleClick();
                 } else if (currentView === 'aim') {
-                    if (!aimPlaying) startAim();
+                    if (!Aim.playing) Aim.start();
                 } else if (currentView === 'stroop') {
                     if (!stPlaying) startStroop();
                 } else if (currentView === 'moving') {
@@ -2140,7 +2135,7 @@
             setTimeout(() => {
                 if (routine.step === 2) {
                     switchView('aim');
-                    startAim();
+                    Aim.start();
                 } else if (routine.step === 3) {
                     switchView('reaction');
                     Reaction.state = 'idle'; // Reset reaction
@@ -2193,83 +2188,6 @@
                 </div>
             `;
         }
-        // ==========================================
-        // 新增：精准定位 (Aim Logic)
-        // ==========================================
-        let aimInterval = null, aimTime = 30, aimPlaying = false, aimHits = 0, aimClicks = 0;
-        const aBox = document.getElementById('aim-container');
-        
-        function startAim() {
-            clearInterval(aimInterval); document.getElementById('aim-overlay').style.display='none';
-
-            // 安全清除之前的靶子
-            document.querySelectorAll('.aim-target').forEach(el => {
-                if(el && el.parentNode) el.remove();
-            });
-
-            const dur = parseInt(document.getElementById('aim-duration').value) || 30;
-            aimTime = Math.max(10, Math.min(120, dur));
-            document.getElementById('aim-time').innerText = aimTime.toFixed(1);
-            aimHits = 0; aimClicks = 0; aimPlaying = true;
-            document.getElementById('aim-hits').innerText = aimHits;
-            document.getElementById('aim-acc').innerText = "0%";
-
-            spawnAimTarg();
-            aimInterval = setInterval(() => {
-                aimTime -= 0.1; document.getElementById('aim-time').innerText = aimTime.toFixed(1);
-                if(aimTime <= 0) endAim();
-            }, 100);
-        }
-
-        function spawnAimTarg() {
-            if(!aimPlaying) return;
-            const t = document.createElement('div'); t.className = 'aim-target';
-            const size = Math.random() * 20 + 25; 
-            t.style.width = size+'px'; t.style.height = size+'px';
-            t.style.left = (Math.random()*(aBox.clientWidth-size) + size/2) + 'px';
-            t.style.top = (Math.random()*(aBox.clientHeight-size) + size/2) + 'px';
-            
-            t.onmousedown = (e) => {
-                e.stopPropagation(); if(!aimPlaying) return;
-                aimHits++; aimClicks++;
-                Utils.playSound('hit', 1, true);
-                document.getElementById('aim-hits').innerText = aimHits;
-                document.getElementById('aim-acc').innerText = Math.round((aimHits/aimClicks)*100)+"%";
-                if(t.parentNode) t.remove(); 
-                spawnAimTarg();
-            };
-            aBox.appendChild(t);
-        }
-
-        function aimMiss(e) { 
-            if(aimPlaying) { 
-                aimClicks++; 
-                document.getElementById('aim-acc').innerText = Math.round((aimHits/aimClicks)*100)+"%"; 
-            } 
-        }
-
-        function endAim() {
-            aimPlaying = false; clearInterval(aimInterval); document.getElementById('aim-time').innerText = "0.0";
-            document.querySelectorAll('.aim-target').forEach(el => {
-                if(el && el.parentNode) el.remove();
-            });
-            
-            const overlay = document.getElementById('aim-overlay');
-            overlay.style.display = 'flex';
-            overlay.style.background = 'rgba(0,0,0,0.8)';
-            overlay.style.color = 'white';
-            overlay.innerHTML = `测试结束<br><span style="font-size:16px; margin-top:10px;">命中: ${aimHits} | 准确率: ${document.getElementById('aim-acc').innerText}</span><br><span style="font-size:14px; margin-top:10px; cursor:pointer;" onclick="startAim()">点击此处或左侧重新开始</span>`;
-            
-            let pb = JSON.parse(localStorage.getItem('aim_best')||'{}');
-            if(!pb.hits || aimHits > pb.hits) { 
-                pb.hits = aimHits;
-                Storage.syncSetItem('aim_best', JSON.stringify(pb));
-                renderExtraPB();
-                updateRadarChart();
-            }
-            if(routine.active && routine.step === 2) routineNext('aim', aimHits);
-        }
-
         // ==========================================
         // 新增：抗压决策 (Stroop Logic)
         // ==========================================
