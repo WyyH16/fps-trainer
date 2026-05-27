@@ -177,7 +177,7 @@ window.Storage = (function() {
         .order('created_at', { ascending: false }).limit(50);
       if (records && records.length > 0) {
         mergeCloudRecords(records);
-        renderSpeedRecords();
+        SpeedTest.renderRecords();
       }
       // push local data to cloud (covers records made while logged out)
       await pushAllLocalToCloud(userId);
@@ -256,7 +256,7 @@ window.Storage = (function() {
           const local = parseFloat(localStorage.getItem('speedtest_best_cps') || '0');
           if (b.score_data.cps > local) {
             localStorage.setItem('speedtest_best_cps', String(b.score_data.cps));
-            speedTestBest = b.score_data.cps;
+            SpeedTest.best = b.score_data.cps;
           }
           break;
         }

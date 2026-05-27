@@ -15,6 +15,7 @@
     <script src="js/aim.js"></script>
     <script src="js/stroop.js"></script>
     <script src="js/moving.js"></script>
+    <script src="js/speedtest.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -484,11 +485,11 @@
                             <div>当前 CPS <strong id="speed-cps">0.00</strong></div>
                             <div>最高 CPS <strong id="speed-best">--</strong></div>
                         </div>
-                        <button id="speed-click-btn" class="btn-action speed-click-btn" onclick="registerSpeedClick()" disabled>点击积攒</button>
+                        <button id="speed-click-btn" class="btn-action speed-click-btn" onclick="SpeedTest.registerClick()" disabled>点击积攒</button>
                         <div class="speed-test-actions">
-                            <button class="btn-action" onclick="startSpeedTest()">开始测试</button>
-                            <button class="btn-action secondary" onclick="stopSpeedTest()">停止</button>
-                            <button class="btn-action secondary" onclick="resetSpeedTest()">重置</button>
+                            <button class="btn-action" onclick="SpeedTest.start()">开始测试</button>
+                            <button class="btn-action secondary" onclick="SpeedTest.stop()">停止</button>
+                            <button class="btn-action secondary" onclick="SpeedTest.reset()">重置</button>
                         </div>
                     </div>
                 </div>
@@ -505,7 +506,7 @@
                 <div class="module-card">
                     <h3 class="module-title">⏱️ 近期记录 <span class="sub">Recent 10</span></h3>
                     <div id="speed-records"></div>
-                    <button class="btn-danger" style="margin-top:15px;" onclick="clearSpeedRecords()">清除手速数据</button>
+                    <button class="btn-danger" style="margin-top:15px;" onclick="SpeedTest.clearRecords()">清除手速数据</button>
                 </div>
                 <div class="module-card">
                     <h3 class="module-title">👋 手速排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="LB.open()">查看全部 →</span></h3>
@@ -674,17 +675,11 @@
         let best2048Score = 0;
         let bestMinesweeper = {}; // keyed by difficulty string e.g. "9x9"
         let bestBreakoutScore = 0;
-        let speedTestClicks = 0;
-        let speedTestRemaining = 5.00;
-        let speedTestRunning = false;
-        let speedTestInterval = null;
-        let speedTestBest = 0;
         const SNAKE_BEST_KEY = 'snake_best_score';
         const GAME_2048_BEST_KEY = '2048_best_score';
         const GAME_2048_STATE_KEY = '2048_state';
         const MINESWEEPER_BEST_KEY = 'minesweeper_bests';
         const BREAKOUT_BEST_KEY = 'breakout_best_score';
-        const SPEED_TEST_KEY = 'speedtest_best_cps';
 
 
 
@@ -933,13 +928,13 @@
             best2048Score = parseInt(localStorage.getItem(GAME_2048_BEST_KEY) || '0', 10) || 0;
             bestMinesweeper = JSON.parse(localStorage.getItem(MINESWEEPER_BEST_KEY) || '{}');
             bestBreakoutScore = parseInt(localStorage.getItem(BREAKOUT_BEST_KEY) || '0', 10) || 0;
-            speedTestBest = parseFloat(localStorage.getItem('speedtest_best_cps') || '0') || 0;
+            SpeedTest.best = parseFloat(localStorage.getItem('speedtest_best_cps') || '0') || 0;
             updateSnakeBestUI();
             update2048BestUI();
             updateMinesweeperBestUI();
             updateBreakoutBestUI();
-            updateSpeedTestUI();
-            renderSpeedRecords();
+            SpeedTest.updateUI();
+            SpeedTest.renderRecords();
             loadSaved2048();
         }
 
@@ -948,37 +943,6 @@
         }
         function updateBreakoutBestUI() {
             // best score shown on panel; update if visible
-        }
-
-        function renderSpeedRecords() {
-            const records = JSON.parse(localStorage.getItem('speedRecords') || '[]');
-            const listEl = document.getElementById('speed-records');
-            if (!records.length) {
-                listEl.innerHTML = '<div class="empty-records">暂无手速记录</div>';
-                return;
-            }
-            let html = '<table><tr><th>时间</th><th>CPS</th></tr>';
-            records.slice(0, 10).forEach(r => {
-                html += `<tr><td style="color: var(--text-sub); font-size: 12px;">${r.date}</td><td style="font-weight:bold;">${r.cps}</td></tr>`;
-            });
-            listEl.innerHTML = html + '</table>';
-        }
-
-        function saveSpeedRecord(cps) {
-            const date = new Date();
-            const dateStr = `${date.getMonth()+1}-${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-            let records = JSON.parse(localStorage.getItem('speedRecords') || '[]');
-            records.unshift({ date: dateStr, cps });
-            if (records.length > 15) records.pop();
-            Storage.syncSetItem('speedRecords', JSON.stringify(records));
-            renderSpeedRecords();
-        }
-
-        function clearSpeedRecords() {
-            if (confirm('确定要清除手速测试记录吗？')) {
-                localStorage.removeItem('speedRecords');
-                renderSpeedRecords();
-            }
         }
 
         function loadWeather() {
@@ -1033,72 +997,6 @@
             if (item.max !== null && item.min !== null) {
                 weatherEl.innerText += ` | ${item.min}°/${item.max}°`;
             }
-        }
-
-        function updateSpeedTestUI() {
-            const timeEl = document.getElementById('speed-time');
-            const clicksEl = document.getElementById('speed-clicks');
-            const cpsEl = document.getElementById('speed-cps');
-            const bestEl = document.getElementById('speed-best');
-            const bestRecordEl = document.getElementById('speed-best-record');
-            const clickBtn = document.getElementById('speed-click-btn');
-            timeEl.innerText = speedTestRemaining.toFixed(2);
-            clicksEl.innerText = speedTestClicks;
-            const elapsed = Math.max(0.001, 5.00 - speedTestRemaining);
-            cpsEl.innerText = (speedTestClicks / elapsed).toFixed(2);
-            bestEl.innerText = speedTestBest ? speedTestBest.toFixed(2) : '--';
-            if (bestRecordEl) bestRecordEl.innerText = speedTestBest ? speedTestBest.toFixed(2) : '--';
-            if (clickBtn) clickBtn.disabled = !speedTestRunning;
-        }
-
-        function saveSpeedTestBest() {
-            const cps = parseFloat((speedTestClicks / 5.00).toFixed(2));
-            if (cps > speedTestBest) {
-                speedTestBest = cps;
-                Storage.syncSetItem(SPEED_TEST_KEY, String(speedTestBest));
-                document.getElementById('speed-best-record').innerText = speedTestBest.toFixed(2);
-                showToast(`已保存手速测试本地最高 CPS：${speedTestBest}`);
-                updateSpeedTestUI();
-            }
-        }
-
-        function startSpeedTest() {
-            if (speedTestRunning) return;
-            clearInterval(speedTestInterval);
-            speedTestClicks = 0;
-            speedTestRemaining = 5.00;
-            speedTestRunning = true;
-            updateSpeedTestUI();
-            speedTestInterval = setInterval(() => {
-                speedTestRemaining = Math.max(0, speedTestRemaining - 0.05);
-                updateSpeedTestUI();
-                if (speedTestRemaining <= 0) {
-                    stopSpeedTest();
-                }
-            }, 50);
-        }
-
-        function stopSpeedTest() {
-            if (!speedTestRunning) return;
-            speedTestRunning = false;
-            clearInterval(speedTestInterval);
-            saveSpeedRecord(parseFloat((speedTestClicks / 5.00).toFixed(2)));
-            saveSpeedTestBest();
-            updateSpeedTestUI();
-        }
-
-        function resetSpeedTest() {
-            clearInterval(speedTestInterval);
-            speedTestRunning = false;
-            speedTestClicks = 0;
-            speedTestRemaining = 5.00;
-            updateSpeedTestUI();
-        }
-
-        function registerSpeedClick() {
-            if (!speedTestRunning) return;
-            speedTestClicks += 1;
-            updateSpeedTestUI();
         }
 
         function saveSnakeBest() {
@@ -1953,7 +1851,7 @@
                 mvOverlay.style.color = 'var(--danger-color)';
                 mvOverlay.innerHTML = '点击START开始<br><span style="font-size:16px; margin-top:10px;">拦截所有移动目标</span>';
             }
-            stopSpeedTest();
+            SpeedTest.stop();
         }
 
         document.addEventListener('keydown', function(event) {
@@ -1990,7 +1888,7 @@
                 } else if (currentView === 'moving') {
                     if (!Moving.playing) Moving.start();
                 } else if (currentView === 'speedtest') {
-                    startSpeedTest();
+                    SpeedTest.start();
                 }
             }
         });
