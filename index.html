@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>W的FPS训练</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="js/utils.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -831,21 +832,6 @@
         }
 
         // ---- syncPullAll: 登录后从云端拉取并合并 ----
-        function formatDateStr(isoStr) {
-            const d = new Date(isoStr);
-            return `${d.getMonth()+1}-${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        }
-
-        function getReactRankColor(rankName) {
-            const map = { '外星神经': '#8b5cf6', '电竞选手': '#3b82f6', '眼疾手快': '#10b981', '普通路人': '#f59e0b', '老年反应': '#6b7280' };
-            return map[rankName] || '#6b7280';
-        }
-
-        function getSchulteRankColor(rankName) {
-            const map = { 'S级': '#8b5cf6', 'A级': '#3b82f6', 'B级': '#10b981', 'C级': '#f59e0b' };
-            return map[rankName] || '#6b7280';
-        }
-
         async function syncPullAll() {
             const client = sb();
             if (!client) return;
@@ -906,7 +892,7 @@
                     cloudSchulteBests[b.sub_key] = {
                         time: b.score_data.time,
                         rank: b.rank || '',
-                        date: formatDateStr(b.achieved_at),
+                        date: Utils.formatDateStr(b.achieved_at),
                         tags: b.tags || ''
                     };
                 }
@@ -921,8 +907,8 @@
                         const local = JSON.parse(localStorage.getItem('rtBest') || 'null');
                         if (!local || b.score_data.ms < local.ms) {
                             localStorage.setItem('rtBest', JSON.stringify({
-                                ms: b.score_data.ms, date: formatDateStr(b.achieved_at),
-                                rank: b.rank, color: getReactRankColor(b.rank)
+                                ms: b.score_data.ms, date: Utils.formatDateStr(b.achieved_at),
+                                rank: b.rank, color: Utils.getReactRankColor(b.rank)
                             }));
                         }
                         break;
@@ -978,7 +964,7 @@
                         const diff = b.sub_key || '9x9';
                         const existing = localBests[diff];
                         if (!existing || parseFloat(b.score_data.time) < parseFloat(existing.time)) {
-                            localBests[diff] = { time: b.score_data.time, date: formatDateStr(b.achieved_at) };
+                            localBests[diff] = { time: b.score_data.time, date: Utils.formatDateStr(b.achieved_at) };
                             localStorage.setItem('minesweeper_bests', JSON.stringify(localBests));
                             bestMinesweeper = localBests;
                         }
@@ -999,16 +985,16 @@
         function mergeCloudRecords(records) {
             const modules = {
                 schulte: { key: 'schulteRecords', maxLen: 15, mapper: (r) => ({
-                    date: formatDateStr(r.created_at), size: r.sub_key,
+                    date: Utils.formatDateStr(r.created_at), size: r.sub_key,
                     numSize: parseInt(r.sub_key) || 5, time: r.score_data.time,
                     rank: r.rank || '', tags: r.tags || ''
                 })},
                 reaction: { key: 'rtRecords', maxLen: 10, mapper: (r) => ({
-                    date: formatDateStr(r.created_at), ms: r.score_data.ms,
-                    rank: r.rank || '', color: getReactRankColor(r.rank)
+                    date: Utils.formatDateStr(r.created_at), ms: r.score_data.ms,
+                    rank: r.rank || '', color: Utils.getReactRankColor(r.rank)
                 })},
                 speedtest: { key: 'speedRecords', maxLen: 15, mapper: (r) => ({
-                    date: formatDateStr(r.created_at), cps: r.score_data.cps
+                    date: Utils.formatDateStr(r.created_at), cps: r.score_data.cps
                 })}
             };
             for (const [module, cfg] of Object.entries(modules)) {
@@ -1164,20 +1150,13 @@
             if (!btn) return;
             if (currentUser) {
                 btn.className = 'auth-btn logged-in';
-                var flag = countryToFlag(currentUser.country);
+                var flag = Utils.countryToFlag(currentUser.country);
                 var display = flag + ' ' + currentUser.username;
                 btn.innerHTML = '<span class="user-badge">☁️ ' + display + ' <span class="logout-link" onclick="event.stopPropagation();handleLogout()">退出</span></span>';
             } else {
                 btn.className = 'auth-btn';
                 btn.innerText = '👤 登录同步';
             }
-        }
-
-        function countryToFlag(code) {
-            if (!code) return '';
-            var a = code.toUpperCase().charCodeAt(0) + 127397;
-            var b = code.toUpperCase().charCodeAt(1) + 127397;
-            return String.fromCodePoint(a) + String.fromCodePoint(b);
         }
 
         async function detectCountry() {
@@ -1319,22 +1298,6 @@
             document.getElementById('leaderboard-overlay').classList.remove('open');
         }
 
-        function formatScore(module, scoreData) {
-            switch (module) {
-                case 'schulte':   return (scoreData.time || '--') + 's';
-                case 'reaction':  return (scoreData.ms || '--') + 'ms';
-                case 'aim':       return String(scoreData.hits || '--') + ' 命中';
-                case 'stroop':    return (scoreData.time || '--') + 's';
-                case 'moving':    return String(scoreData.score || '--') + ' 分';
-                case 'speedtest': return (scoreData.cps || '--') + ' CPS';
-                case 'snake':     return String(scoreData.score || '--') + ' 分';
-                case '2048':      return String(scoreData.score || '--') + ' 分';
-                case 'minesweeper': return (scoreData.time || '--') + 's';
-                case 'breakout':  return String(scoreData.score || '--') + ' 分';
-                default:          return '--';
-            }
-        }
-
         async function fetchLeaderboard(containerId) {
             const el = document.getElementById(containerId);
             if (!el) return;
@@ -1360,8 +1323,8 @@
                     const rankClass = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
                     const isMe = currentUser && row.user_id === currentUser.id;
                     const rowClass = isMe ? 'me-highlight' : '';
-                    var flag = countryToFlag(row.country);
-                    html += `<tr class="${rowClass}"><td class="${rankClass}">${i + 1}</td><td>${flag} ${row.username}${isMe ? ' ⭐' : ''}</td><td style="font-weight:bold;font-family:monospace;">${formatScore(leaderboardModule, row.score_data)}</td><td style="font-size:12px;">${row.rank || '-'}</td></tr>`;
+                    var flag = Utils.countryToFlag(row.country);
+                    html += `<tr class="${rowClass}"><td class="${rankClass}">${i + 1}</td><td>${flag} ${row.username}${isMe ? ' ⭐' : ''}</td><td style="font-weight:bold;font-family:monospace;">${Utils.formatScore(leaderboardModule, row.score_data)}</td><td style="font-size:12px;">${row.rank || '-'}</td></tr>`;
                 });
                 html += '</table>';
                 el.innerHTML = html;
@@ -1421,8 +1384,8 @@
                     var rc = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
                     var isMe = currentUser && row.user_id === currentUser.id;
                     var rowClass = isMe ? 'me-highlight' : '';
-                    var flag = countryToFlag(row.country);
-                    html += '<tr class="' + rowClass + '"><td class="' + rc + '">' + (i + 1) + '</td><td>' + flag + ' ' + row.username + (isMe ? ' ⭐' : '') + '</td><td style="font-weight:bold;font-family:monospace;font-size:12px;">' + formatScore(cfg.module, row.score_data) + '</td></tr>';
+                    var flag = Utils.countryToFlag(row.country);
+                    html += '<tr class="' + rowClass + '"><td class="' + rc + '">' + (i + 1) + '</td><td>' + flag + ' ' + row.username + (isMe ? ' ⭐' : '') + '</td><td style="font-weight:bold;font-family:monospace;font-size:12px;">' + Utils.formatScore(cfg.module, row.score_data) + '</td></tr>';
                 });
                 html += '</table>';
                 el.innerHTML = html;
@@ -1503,8 +1466,8 @@
                     var rc = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
                     var isMe = currentUser && row.user_id === currentUser.id;
                     var rowClass = isMe ? 'me-highlight' : '';
-                    var flag = countryToFlag(row.country);
-                    html += '<tr class="' + rowClass + '"><td class="' + rc + '">' + (i + 1) + '</td><td>' + flag + ' ' + row.username + (isMe ? ' ⭐' : '') + '</td><td style="font-weight:bold;font-family:monospace;font-size:12px;">' + formatScore(cfg.module, row.score_data) + '</td></tr>';
+                    var flag = Utils.countryToFlag(row.country);
+                    html += '<tr class="' + rowClass + '"><td class="' + rc + '">' + (i + 1) + '</td><td>' + flag + ' ' + row.username + (isMe ? ' ⭐' : '') + '</td><td style="font-weight:bold;font-family:monospace;font-size:12px;">' + Utils.formatScore(cfg.module, row.score_data) + '</td></tr>';
                 });
                 html += '</table>';
                 el.innerHTML = html;
@@ -1656,7 +1619,7 @@
                 ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
                 ctx.shadowColor = s === 0 ? 'rgba(16,185,129,0.6)' : 'transparent';
                 ctx.shadowBlur = s === 0 ? 8 : 0;
-                roundRect(ctx, seg.x * cell + pad, seg.y * cell + pad, cell - pad * 2, cell - pad * 2, s === 0 ? 6 : 4);
+                Utils.roundRect(ctx, seg.x * cell + pad, seg.y * cell + pad, cell - pad * 2, cell - pad * 2, s === 0 ? 6 : 4);
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
@@ -1698,20 +1661,6 @@
                 ctx.fillStyle = pt.color.replace(')', ',' + pt.life + ')').replace('hsl', 'hsla');
                 ctx.beginPath(); ctx.arc(pt.x, pt.y, 3 * pt.life, 0, Math.PI * 2); ctx.fill();
             }
-        }
-
-        function roundRect(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.lineTo(x + w - r, y);
-            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-            ctx.lineTo(x + w, y + h - r);
-            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-            ctx.lineTo(x + r, y + h);
-            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-            ctx.lineTo(x, y + r);
-            ctx.quadraticCurveTo(x, y, x + r, y);
-            ctx.closePath();
         }
 
         // ============ 2048 POLISHED ============
@@ -1812,7 +1761,7 @@
                 .then(data => {
                     if (data && data.current_weather) {
                         const item = {
-                            summary: getWeatherDescription(data.current_weather.weathercode),
+                            summary: Utils.getWeatherDescription(data.current_weather.weathercode),
                             temp: Math.round(data.current_weather.temperature),
                             max: data.daily?.temperature_2m_max?.[0] ? Math.round(data.daily.temperature_2m_max[0]) : null,
                             min: data.daily?.temperature_2m_min?.[0] ? Math.round(data.daily.temperature_2m_min[0]) : null
@@ -1836,18 +1785,6 @@
             if (item.max !== null && item.min !== null) {
                 weatherEl.innerText += ` | ${item.min}°/${item.max}°`;
             }
-        }
-
-        function getWeatherDescription(code) {
-            const map = {
-                0: '☀️晴', 1: '☀️主要晴', 2: '☁️多云', 3: '⛅阴',
-                45: '🌫️雾', 48: '🧊🌫️冻雾', 51: '🌧️毛毛雨', 53: '🌧️小雨', 55: '🌧️大雨',
-                56: '🧊🌧️冻毛毛雨', 57: '🧊🌧️冻大雨', 61: '🌧️小雨', 63: '🌧️中雨', 65: '🌧️大雨',
-                66: '🧊🌧️冻小雨', 67: '🧊🌧️冻大雨', 71: '🌨️小雪', 73: '🌨️中雪', 75: '🌨️大雪',
-                77: '🧊 hail', 80: '🌦️阵雨', 81: '⛈️雷阵雨', 82: '⛈️大阵雨',
-                85: '🌨️小雪', 86: '🌨️大雪', 95: '🌩️雷雨', 96: '🌩️雷阵雨', 99: '⛈️强雷雨'
-            };
-            return map[code] || '未知天气';
         }
 
         function updateSpeedTestUI() {
@@ -2293,7 +2230,7 @@
             var bests = JSON.parse(localStorage.getItem(MINESWEEPER_BEST_KEY) || '{}');
             var existing = bests[diffKey];
             if (!existing || msTimerSec < parseFloat(existing.time)) {
-                bests[diffKey] = { time: String(msTimerSec), date: formatDateStr(new Date().toISOString()) };
+                bests[diffKey] = { time: String(msTimerSec), date: Utils.formatDateStr(new Date().toISOString()) };
                 syncSetItem(MINESWEEPER_BEST_KEY, JSON.stringify(bests));
                 bestMinesweeper = bests;
                 showToast('新纪录！扫雷 ' + diffKey + ' ' + msTimerSec + ' 秒');
@@ -2602,7 +2539,7 @@
             }
             // Draw paddle
             bkCtx.fillStyle = '#f8fafc';
-            roundRectB(bkCtx, bkPaddleX, h - 28, bkPaddleW, bkPaddleH, 6);
+            Utils.roundRect(bkCtx, bkPaddleX, h - 28, bkPaddleW, bkPaddleH, 6);
             bkCtx.fill();
             // Draw ball
             bkCtx.fillStyle = '#f8fafc';
@@ -2630,7 +2567,7 @@
                 bkCtx.fillStyle = grad;
                 bkCtx.shadowColor = br.color;
                 bkCtx.shadowBlur = 3;
-                roundRectB(bkCtx, br.x, br.y, br.w, br.h, 3);
+                Utils.roundRect(bkCtx, br.x, br.y, br.w, br.h, 3);
                 bkCtx.fill();
                 bkCtx.shadowBlur = 0;
                 // highlight
@@ -2644,7 +2581,7 @@
             bkCtx.fillStyle = pGrad;
             bkCtx.shadowColor = 'rgba(148,163,184,0.5)';
             bkCtx.shadowBlur = 10;
-            roundRectB(bkCtx, bkPaddleX, h - 28, bkPaddleW, bkPaddleH, 6);
+            Utils.roundRect(bkCtx, bkPaddleX, h - 28, bkPaddleW, bkPaddleH, 6);
             bkCtx.fill();
             bkCtx.shadowBlur = 0;
             // Draw ball
@@ -2709,20 +2646,6 @@
                 livesEl.innerText = hearts || '💀';
             }
             if (levelEl) levelEl.innerText = bkLevel;
-        }
-
-        function roundRectB(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.lineTo(x + w - r, y);
-            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-            ctx.lineTo(x + w, y + h - r);
-            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-            ctx.lineTo(x + r, y + h);
-            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-            ctx.lineTo(x, y + r);
-            ctx.quadraticCurveTo(x, y, x + r, y);
-            ctx.closePath();
         }
 
         // ============ Entertainment Key Handler ============
@@ -3038,27 +2961,6 @@
         let modeReverse, modeBlind, modeDistract, modeSound;
         let cellTimes = [], lastClickTime = 0, comboCount = 0;
 
-        let audioCtx;
-        function initAudio() {
-            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-        }
-        function playSound(type) {
-            if (!modeSound || !audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
-            if (type === 'hit') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(600 + (comboCount * 30), audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'error') {
-                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-            }
-        }
-
         function prepareSchulte() {
             clearInterval(timerInterval);
             isPlaying = false; isCountingDown = false;
@@ -3070,7 +2972,7 @@
             modeBlind = document.getElementById('mode-blind').checked;
             modeDistract = document.getElementById('mode-distract').checked;
             modeSound = document.getElementById('mode-sound').checked;
-            if(modeSound) initAudio(); 
+            if(modeSound) Utils.initAudio(); 
             
             let inputSize = parseInt(document.getElementById('grid-size').value);
             currentSize = Math.max(2, Math.min(10, inputSize));
@@ -3174,12 +3076,12 @@
         function handleSchulteClick(cell, num) {
             if (!isPlaying) return;
             if (num === currentTarget) {
-                comboCount++; playSound('hit'); cell.classList.add('clicked');
+                comboCount++; Utils.playSound('hit', comboCount, modeSound); cell.classList.add('clicked');
                 const now = Date.now(); cellTimes[cell.dataset.index] = now - lastClickTime; lastClickTime = now;
                 if (currentTarget === finalTarget) endSchulte();
                 else { currentTarget += step; document.getElementById('target-display').innerText = currentTarget; }
             } else if (!cell.classList.contains('clicked')) {
-                comboCount = 0; playSound('error'); cell.classList.add('wrong-click');
+                comboCount = 0; Utils.playSound('error', comboCount, modeSound); cell.classList.add('wrong-click');
                 setTimeout(() => cell.classList.remove('wrong-click'), 300);
             }
         }
@@ -3471,7 +3373,7 @@
             t.onmousedown = (e) => {
                 e.stopPropagation(); if(!aimPlaying) return;
                 aimHits++; aimClicks++;
-                if(typeof playSound === 'function') playSound('hit');
+                Utils.playSound('hit', 1, true);
                 document.getElementById('aim-hits').innerText = aimHits;
                 document.getElementById('aim-acc').innerText = Math.round((aimHits/aimClicks)*100)+"%";
                 if(t.parentNode) t.remove(); 
@@ -3563,7 +3465,7 @@
                     }
                 } else { nextStroop(); }
             } else {
-                if(typeof playSound === 'function') playSound('error');
+                Utils.playSound('error', 0, true);
                 stTime += 1.0; 
                 const el = document.getElementById('st-time'); 
                 el.style.color = 'var(--danger-color)'; 
@@ -3627,7 +3529,7 @@
                 e.stopPropagation();
                 if (!mvPlaying) return;
                 mvScore++;
-                if (typeof playSound === 'function') playSound('hit');
+                Utils.playSound('hit', 1, true);
                 updateMvUI();
                 gsap.killTweensOf(el);
                 activeTargets = activeTargets.filter(item => item.el !== el);
@@ -3647,7 +3549,7 @@
                     if (idx !== -1) {
                         activeTargets.splice(idx, 1);
                         mvLives--;
-                        if (typeof playSound === 'function') playSound('error');
+                        Utils.playSound('error', 0, true);
                         updateMvUI();
                         if (mvLives <= 0) endMoving();
                     }
