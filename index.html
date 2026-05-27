@@ -9,6 +9,7 @@
     <script src="js/utils.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/leaderboard.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -214,7 +215,7 @@
     <!-- Leaderboard Modal -->
     <div id="leaderboard-overlay" class="auth-overlay">
         <div class="auth-card" style="max-width:520px;">
-            <button class="btn-close" onclick="closeLeaderboard()">&times;</button>
+            <button class="btn-close" onclick="LB.close()">&times;</button>
             <h2>🏆 全球排行榜</h2>
             <div class="leaderboard-filter" id="lb-filter"></div>
             <div id="lb-content" style="max-height:400px;overflow-y:auto;"></div>
@@ -248,7 +249,7 @@
                     <div id="routine-result-content"></div>
                 </div>
                 <div class="module-card" style="margin-top:20px;">
-                    <h3 class="module-title">🌍 全球排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="openLeaderboard()">查看全部 →</span></h3>
+                    <h3 class="module-title">🌍 全球排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="LB.open()">查看全部 →</span></h3>
                     <div id="mini-leaderboard"></div>
                 </div>
             </div>
@@ -310,13 +311,13 @@
                 <div class="module-card">
                     <h3 class="module-title">🏆 方格排行榜
                         <span style="display:flex;align-items:center;gap:6px;">
-                            <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="openLeaderboard()">查看全部 →</span>
+                            <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="LB.open()">查看全部 →</span>
                             <span style="display:flex;gap:3px;" id="schulte-lb-grid-btns">
-                                <button class="lb-grid-btn" data-grid="3x3" onclick="switchSchulteLBGrid('3x3')">3x3</button>
-                                <button class="lb-grid-btn" data-grid="4x4" onclick="switchSchulteLBGrid('4x4')">4x4</button>
-                                <button class="lb-grid-btn active" data-grid="5x5" onclick="switchSchulteLBGrid('5x5')">5x5</button>
-                                <button class="lb-grid-btn" data-grid="6x6" onclick="switchSchulteLBGrid('6x6')">6x6</button>
-                                <button class="lb-grid-btn" data-grid="7x7" onclick="switchSchulteLBGrid('7x7')">7x7</button>
+                                <button class="lb-grid-btn" data-grid="3x3" onclick="LB.switchSchulteGrid('3x3')">3x3</button>
+                                <button class="lb-grid-btn" data-grid="4x4" onclick="LB.switchSchulteGrid('4x4')">4x4</button>
+                                <button class="lb-grid-btn active" data-grid="5x5" onclick="LB.switchSchulteGrid('5x5')">5x5</button>
+                                <button class="lb-grid-btn" data-grid="6x6" onclick="LB.switchSchulteGrid('6x6')">6x6</button>
+                                <button class="lb-grid-btn" data-grid="7x7" onclick="LB.switchSchulteGrid('7x7')">7x7</button>
                             </span>
                         </span>
                     </h3>
@@ -352,7 +353,7 @@
                     <button class="btn-danger" style="margin-top:15px;" onclick="clearRtRecords()">清除反应数据</button>
                 </div>
                 <div class="module-card">
-                    <h3 class="module-title">⚡ 反应排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="openLeaderboard()">查看全部 →</span></h3>
+                    <h3 class="module-title">⚡ 反应排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="LB.open()">查看全部 →</span></h3>
                     <div id="lb-reaction"></div>
                 </div>
             </div>
@@ -377,7 +378,7 @@
                     <div class="stat-box"><div style="font-size:12px;">历史最高命中</div><div class="stat-val" id="aim-pb-hits">--</div></div>
                 </div>
                 <div class="module-card" style="margin-top:20px;">
-                    <h3 class="module-title">🎯 甩枪排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="openLeaderboard()">查看全部 →</span></h3>
+                    <h3 class="module-title">🎯 甩枪排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="LB.open()">查看全部 →</span></h3>
                     <div id="lb-aim"></div>
                 </div>
             </div>
@@ -410,7 +411,7 @@
                     <div class="stat-box"><div style="font-size:12px;">20次最快纪录</div><div class="stat-val" id="st-pb">-- s</div></div>
                 </div>
                 <div class="module-card" style="margin-top:20px;">
-                    <h3 class="module-title">🧠 决策排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="openLeaderboard()">查看全部 →</span></h3>
+                    <h3 class="module-title">🧠 决策排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="LB.open()">查看全部 →</span></h3>
                     <div id="lb-stroop"></div>
                 </div>
             </div>
@@ -450,7 +451,7 @@
                     <div class="stat-box"><div style="font-size:12px;">最高拦截得分</div><div class="stat-val" id="mv-pb">--</div></div>
                 </div>
                 <div class="module-card" style="margin-top:20px;">
-                    <h3 class="module-title">🛸 飞靶排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="openLeaderboard()">查看全部 →</span></h3>
+                    <h3 class="module-title">🛸 飞靶排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="LB.open()">查看全部 →</span></h3>
                     <div id="lb-moving"></div>
                 </div>
             </div>
@@ -502,7 +503,7 @@
                     <button class="btn-danger" style="margin-top:15px;" onclick="clearSpeedRecords()">清除手速数据</button>
                 </div>
                 <div class="module-card">
-                    <h3 class="module-title">👋 手速排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="openLeaderboard()">查看全部 →</span></h3>
+                    <h3 class="module-title">👋 手速排行榜 <span class="sub" style="cursor:pointer;color:var(--accent-color);" onclick="LB.open()">查看全部 →</span></h3>
                     <div id="lb-speedtest"></div>
                 </div>
             </div>
@@ -615,8 +616,8 @@
 
             // 切换时重置所有进行中的游戏
             resetAllGames();
-            if (view === 'overview') { updateRadarChart(); fetchMiniLeaderboard(); }
-            if (MODULE_LB_MAP[view]) { fetchModuleLB(view); }
+            if (view === 'overview') { updateRadarChart(); LB.fetchMini(); }
+            if (LB.MODULE_MAP[view]) { LB.fetchModule(view); }
 
             // GSAP stagger entrance for cards and panels
             const children = viewEl.querySelectorAll('.module-card, .schulte-center, .rt-center, .aim-center, .stroop-center, .moving-center, .overview-center, .entertainment-small');
@@ -680,155 +681,7 @@
         const BREAKOUT_BEST_KEY = 'breakout_best_score';
         const SPEED_TEST_KEY = 'speedtest_best_cps';
 
-        let leaderboardModule = 'schulte';
-        let leaderboardSubKey = '5x5';
 
-        // ==================== 排行榜逻辑 ====================
-        const LEADERBOARD_MODULES = [
-            { module: 'schulte', sub: '5x5', label: '方格5x5', sort: 'asc', key: 'time' },
-            { module: 'schulte', sub: '4x4', label: '方格4x4', sort: 'asc', key: 'time' },
-            { module: 'reaction', sub: '', label: '反应速度', sort: 'asc', key: 'ms' },
-            { module: 'aim', sub: '', label: '甩枪命中', sort: 'desc', key: 'hits' },
-            { module: 'stroop', sub: '', label: '抗压决策', sort: 'asc', key: 'time' },
-            { module: 'moving', sub: '', label: '飞靶拦截', sort: 'desc', key: 'score' },
-            { module: 'speedtest', sub: '', label: '手速CPS', sort: 'desc', key: 'cps' },
-            { module: 'snake', sub: '', label: '贪吃蛇', sort: 'desc', key: 'score' },
-            { module: '2048', sub: '', label: '2048', sort: 'desc', key: 'score' },
-            { module: 'minesweeper', sub: '9x9', label: '扫雷9x9', sort: 'asc', key: 'time' },
-            { module: 'breakout', sub: '', label: '打砖块', sort: 'desc', key: 'score' },
-        ];
-
-        function renderLeaderboardFilter(containerId) {
-            const el = document.getElementById(containerId);
-            if (!el) return;
-            el.innerHTML = LEADERBOARD_MODULES.map(m => {
-                const active = (leaderboardModule === m.module && leaderboardSubKey === m.sub) ? ' active' : '';
-                return `<button class="${active}" onclick="switchLeaderboard('${m.module}','${m.sub}')">${m.label}</button>`;
-            }).join('');
-        }
-
-        async function switchLeaderboard(mod, sub) {
-            leaderboardModule = mod;
-            leaderboardSubKey = sub;
-            renderLeaderboardFilter('lb-filter');
-            await fetchLeaderboard('lb-content');
-            await fetchMiniLeaderboard();
-        }
-
-        async function openLeaderboard() {
-            renderLeaderboardFilter('lb-filter');
-            await fetchLeaderboard('lb-content');
-            document.getElementById('leaderboard-overlay').classList.add('open');
-        }
-
-        function closeLeaderboard() {
-            document.getElementById('leaderboard-overlay').classList.remove('open');
-        }
-
-        async function fetchLeaderboard(containerId) {
-            const el = document.getElementById(containerId);
-            if (!el) return;
-            el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-sub);">加载中...</div>';
-            const client = Storage.getSupabase();
-            if (!client) {
-                el.innerHTML = '<div class="empty-records">云端未连接</div>';
-                return;
-            }
-            try {
-                const { data, error } = await client.rpc('get_leaderboard', {
-                    p_module: leaderboardModule,
-                    p_sub_key: leaderboardSubKey
-                });
-                if (error) throw error;
-                if (!data || data.length === 0) {
-                    el.innerHTML = '<div class="empty-records">暂无排行数据，快去训练吧！</div>';
-                    return;
-                }
-                const rows = data.slice(0, 10);
-                let html = '<table class="leaderboard-table"><tr><th>排名</th><th>玩家</th><th>成绩</th><th>评级</th></tr>';
-                rows.forEach((row, i) => {
-                    const rankClass = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
-                    const isMe = Auth.currentUser && row.user_id === Auth.currentUser.id;
-                    const rowClass = isMe ? 'me-highlight' : '';
-                    var flag = Utils.countryToFlag(row.country);
-                    html += `<tr class="${rowClass}"><td class="${rankClass}">${i + 1}</td><td>${flag} ${row.username}${isMe ? ' ⭐' : ''}</td><td style="font-weight:bold;font-family:monospace;">${Utils.formatScore(leaderboardModule, row.score_data)}</td><td style="font-size:12px;">${row.rank || '-'}</td></tr>`;
-                });
-                html += '</table>';
-                el.innerHTML = html;
-            } catch (e) {
-                el.innerHTML = '<div class="empty-records">加载排行榜失败: ' + (e.message || '未知错误') + '</div>';
-                console.warn('Leaderboard fetch error:', e.message);
-            }
-        }
-
-        async function fetchMiniLeaderboard() {
-            await fetchLeaderboard('mini-leaderboard');
-        }
-
-        function refreshRelevantLB(module) {
-            // 刷新总览的 mini 排行榜
-            if (currentView === 'overview') { fetchMiniLeaderboard(); }
-            // 刷新当前模块的排行榜
-            if (MODULE_LB_MAP[module] && currentView === module) { fetchModuleLB(module); }
-        }
-
-        // 各模块排行榜
-        var schulteLBSubKey = '5x5';
-        var MODULE_LB_MAP = {
-            schulte:   { container: 'lb-schulte',   module: 'schulte',   sub: '5x5' },
-            reaction:  { container: 'lb-reaction',  module: 'reaction',  sub: '' },
-            aim:       { container: 'lb-aim',       module: 'aim',       sub: '' },
-            stroop:    { container: 'lb-stroop',    module: 'stroop',    sub: '' },
-            moving:    { container: 'lb-moving',    module: 'moving',    sub: '' },
-            speedtest: { container: 'lb-speedtest',  module: 'speedtest',  sub: '' },
-        };
-        var ENT_LB_MAP = {
-            snake:       { module: 'snake',       sub: '' },
-            '2048':      { module: '2048',        sub: '' },
-            minesweeper: { module: 'minesweeper', sub: '9x9' },
-            breakout:    { module: 'breakout',    sub: '' },
-        };
-
-        async function fetchModuleLB(view) {
-            var cfg = MODULE_LB_MAP[view];
-            if (!cfg) return;
-            var el = document.getElementById(cfg.container);
-            if (!el) return;
-            el.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-sub);font-size:12px;">加载中...</div>';
-            var client = Storage.getSupabase();
-            if (!client) { el.innerHTML = '<div class="empty-records">云端未连接</div>'; return; }
-            try {
-                var subKey = (view === 'schulte') ? schulteLBSubKey : cfg.sub;
-                var _r = await client.rpc('get_leaderboard', { p_module: cfg.module, p_sub_key: subKey });
-                if (_r.error) throw _r.error;
-                if (!_r.data || _r.data.length === 0) {
-                    el.innerHTML = '<div class="empty-records">暂无排行</div>';
-                    return;
-                }
-                var rows = _r.data.slice(0, 5);
-                var html = '<table class="leaderboard-table"><tr><th>#</th><th>玩家</th><th>成绩</th></tr>';
-                rows.forEach(function(row, i) {
-                    var rc = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
-                    var isMe = Auth.currentUser && row.user_id === Auth.currentUser.id;
-                    var rowClass = isMe ? 'me-highlight' : '';
-                    var flag = Utils.countryToFlag(row.country);
-                    html += '<tr class="' + rowClass + '"><td class="' + rc + '">' + (i + 1) + '</td><td>' + flag + ' ' + row.username + (isMe ? ' ⭐' : '') + '</td><td style="font-weight:bold;font-family:monospace;font-size:12px;">' + Utils.formatScore(cfg.module, row.score_data) + '</td></tr>';
-                });
-                html += '</table>';
-                el.innerHTML = html;
-            } catch (e) {
-                el.innerHTML = '<div class="empty-records">加载失败: ' + (e.message || '未知错误') + '</div>';
-                console.warn('Module LB error:', e.message);
-            }
-        }
-
-        function switchSchulteLBGrid(grid) {
-            schulteLBSubKey = grid;
-            MODULE_LB_MAP.schulte.sub = grid;
-            var btns = document.querySelectorAll('#schulte-lb-grid-btns .lb-grid-btn');
-            btns.forEach(function(b) { b.classList.toggle('active', b.dataset.grid === grid); });
-            if (currentView === 'schulte') { fetchModuleLB('schulte'); }
-        }
 
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
@@ -867,44 +720,7 @@
                 if (bkBricks.length === 0) resetBreakout();
                 else drawBreakoutIdle();
             }
-            fetchEntertainmentLB(game);
-        }
-
-        async function fetchEntertainmentLB(game) {
-            var el = document.getElementById('lb-entertainment');
-            var titleEl = document.getElementById('ent-lb-title');
-            var cfg = ENT_LB_MAP[game];
-            if (!cfg || !el) return;
-            if (titleEl) {
-                var titles = { snake: '贪吃蛇排行榜', '2048': '2048排行榜', minesweeper: '扫雷排行榜', breakout: '打砖块排行榜' };
-                titleEl.innerText = titles[game] || '';
-            }
-            var client = Storage.getSupabase();
-            if (!client) { el.innerHTML = '<div class="empty-records">云端未连接</div>'; return; }
-            try {
-                var subKey = cfg.sub;
-                if (game === 'minesweeper') { subKey = msDiffKey(); }
-                var _r = await client.rpc('get_leaderboard', { p_module: cfg.module, p_sub_key: subKey });
-                if (_r.error) throw _r.error;
-                if (!_r.data || _r.data.length === 0) { el.innerHTML = '<div class="empty-records">暂无排行</div>'; return; }
-                var rows = _r.data.slice(0, 5);
-                var html = '<table class="leaderboard-table"><tr><th>#</th><th>玩家</th><th>成绩</th></tr>';
-                rows.forEach(function(row, i) {
-                    var rc = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
-                    var isMe = Auth.currentUser && row.user_id === Auth.currentUser.id;
-                    var rowClass = isMe ? 'me-highlight' : '';
-                    var flag = Utils.countryToFlag(row.country);
-                    html += '<tr class="' + rowClass + '"><td class="' + rc + '">' + (i + 1) + '</td><td>' + flag + ' ' + row.username + (isMe ? ' ⭐' : '') + '</td><td style="font-weight:bold;font-family:monospace;font-size:12px;">' + Utils.formatScore(cfg.module, row.score_data) + '</td></tr>';
-                });
-                html += '</table>';
-                el.innerHTML = html;
-            } catch (e) {
-                el.innerHTML = '<div class="empty-records">加载失败</div>';
-            }
-        }
-
-        function msDiffKey() {
-            return msCols + 'x' + msRows;
+            LB.fetchEntertainment(game);
         }
 
         // ============ 贪吃蛇 POLISHED ============
@@ -1286,7 +1102,7 @@
                 Storage.syncSetItem(SNAKE_BEST_KEY, String(snakeBestScore));
                 updateSnakeBestUI();
                 showToast('已保存贪吃蛇本地最高分：' + snakeBestScore);
-                if (entertainmentMode === 'snake') fetchEntertainmentLB('snake');
+                if (entertainmentMode === 'snake') LB.fetchEntertainment('snake');
             }
         }
 
@@ -1296,7 +1112,7 @@
                 Storage.syncSetItem(GAME_2048_BEST_KEY, String(best2048Score));
                 update2048BestUI();
                 showToast('已保存2048本地最高分：' + best2048Score);
-                if (entertainmentMode === '2048') fetchEntertainmentLB('2048');
+                if (entertainmentMode === '2048') LB.fetchEntertainment('2048');
             }
         }
 
@@ -1517,7 +1333,7 @@
             else if (diff === 'expert') { msRows = 16; msCols = 30; msMines = 99; }
             document.querySelectorAll('#ms-diff-btns button').forEach(function(b) { b.classList.toggle('active', b.dataset.diff === diff); });
             resetMinesweeper();
-            fetchEntertainmentLB('minesweeper');
+            LB.fetchEntertainment('minesweeper');
         }
 
         function resetMinesweeper() {
@@ -1653,7 +1469,7 @@
 
         function saveMinesweeperBest() {
             if (!msGameStarted) return;
-            var diffKey = msDiffKey();
+            var diffKey = LB.msDiffKey();
             var bests = JSON.parse(localStorage.getItem(MINESWEEPER_BEST_KEY) || '{}');
             var existing = bests[diffKey];
             if (!existing || msTimerSec < parseFloat(existing.time)) {
@@ -1663,7 +1479,7 @@
                 showToast('新纪录！扫雷 ' + diffKey + ' ' + msTimerSec + ' 秒');
             }
             updateMinesweeperBestUI();
-            fetchEntertainmentLB('minesweeper');
+            LB.fetchEntertainment('minesweeper');
         }
 
         function initMinesweeperUI() {
@@ -1949,7 +1765,7 @@
                 bestBreakoutScore = bkScore;
                 Storage.syncSetItem(BREAKOUT_BEST_KEY, String(bestBreakoutScore));
                 showToast('新纪录！打砖块最高分：' + bestBreakoutScore);
-                fetchEntertainmentLB('breakout');
+                LB.fetchEntertainment('breakout');
             }
         }
 
@@ -2195,7 +2011,7 @@
             resetSnake();
             attachEntertainmentTouch();
             Auth.restoreState().then(function() {
-                if (window.__supabase) { fetchMiniLeaderboard(); }
+                if (window.__supabase) { LB.fetchMini(); }
             });
         };
 
