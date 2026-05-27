@@ -4,26 +4,14 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>W的FPS训练</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/leaderboard.js"></script>
-    <script src="js/radar.js"></script>
-    <script src="js/schulte.js"></script>
-    <script src="js/reaction.js"></script>
-    <script src="js/aim.js"></script>
-    <script src="js/stroop.js"></script>
-    <script src="js/moving.js"></script>
-    <script src="js/speedtest.js"></script>
-    <script src="js/snake.js"></script>
-    <script src="js/tile2048.js"></script>
-    <script src="js/minesweeper.js"></script>
-    <script src="js/breakout.js"></script>
-    <script src="js/entertainment.js"></script>
-    <script src="js/routine.js"></script>
+    <title>FPS训练台 // TACTICAL STATION</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"
+          media="print" onload="this.media='all'; this.onload=null;">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 </head>
 <script>
   let deferredInstallPrompt = null;
@@ -32,14 +20,15 @@
     const toast = document.getElementById('pwa-toast');
     if (!toast) return;
     toast.innerText = text;
+    if (typeof gsap === 'undefined') return;
     gsap.killTweensOf(toast);
     gsap.fromTo(toast,
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.5)' }
+      { opacity: 0, y: 16, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: 'back.out(1.5)' }
     );
     clearTimeout(window.pwaToastTimeout);
     window.pwaToastTimeout = setTimeout(() => {
-      gsap.to(toast, { opacity: 0, y: -8, duration: 0.3, ease: 'power2.in' });
+      gsap.to(toast, { opacity: 0, y: -12, scale: 0.95, duration: 0.25, ease: 'power2.in' });
     }, 3200);
   }
 
@@ -142,7 +131,7 @@
 
     <div class="header-wrap">
         <div class="title-area">
-            <h1>😀W的FPS训练</h1>
+            <h1>FPS训练台 <span style="color:var(--text-sub);font-size:12px;font-weight:500;letter-spacing:0.08em;">// TACTICAL STATION</span></h1>
             <div class="nav-tabs">
                 <button class="tab-btn active" onclick="App.switchView('overview')">📊 综合总览</button>
                 <button class="tab-btn" onclick="App.switchView('schulte')">🟥 方格索敌 (Schulte)</button>
@@ -153,12 +142,14 @@
                 <button class="tab-btn" onclick="App.switchView('speedtest')">👋 手速测试</button>
                 <button class="tab-btn" onclick="App.switchView('entertainment')">🎮 娱乐模块</button>
             </div>
-            <div id="weather-info" class="weather-info">天气加载中…</div>
+            <div id="weather-info" class="weather-info">SYS: ACQUIRING DATA...</div>
         </div>
-        <button class="theme-toggle" onclick="App.toggleTheme()">🌙 夜间模式</button>
-        <button id="install-btn" class="theme-toggle" style="display:none;" onclick="promptInstall()">📥 安装到桌面</button>
-        <button id="update-btn" class="theme-toggle" style="display:none;">🔄 更新可用</button>
-        <button id="auth-btn" class="auth-btn" onclick="Auth.openModal()">👤 登录同步</button>
+        <div class="header-actions">
+        <button class="theme-toggle" onclick="App.toggleTheme()">NIGHT MODE</button>
+        <button id="install-btn" class="theme-toggle" style="display:none;" onclick="promptInstall()">INSTALL</button>
+        <button id="update-btn" class="theme-toggle" style="display:none;">UPDATE</button>
+        <button id="auth-btn" class="auth-btn" onclick="Auth.openModal()">LOGIN / SYNC</button>
+        </div>
     </div>
     <div id="pwa-toast" class="pwa-toast"></div>
 
@@ -298,7 +289,7 @@
                 </div>
                 <div class="board-container">
                     <div id="overlay"><div id="countdown-text">3</div></div>
-                    <div id="schulte-grid"><div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-sub); display: flex; align-items: center; justify-content: center; font-weight: bold;">等待指令介入...</div></div>
+                    <div id="schulte-grid"><div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-sub); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em;">// AWAITING DEPLOYMENT...</div></div>
                 </div>
 
                 <div id="post-game-panel" class="module-card">
@@ -400,8 +391,8 @@
                     <div>TIME: <span id="aim-time" class="hud-val hud-target">30.0</span>s</div>
                 </div>
                 <div id="aim-container" onmousedown="Aim.miss(event)">
-                    <div id="aim-overlay" style="position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; background:rgba(0,0,0,0.6); z-index:10; font-size:24px; text-align:center;">
-                        点击左侧启动<br><span style="font-size:16px; margin-top:10px;">30秒定点甩枪</span>
+                    <div id="aim-overlay" style="position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white; background:rgba(8,13,19,0.85); z-index:10; font-size:24px; text-align:center;">
+                        <div class="overlay-title">AIM TRAINING</div><div class="overlay-sub">30-SECOND ENGAGEMENT</div><div class="overlay-action" onclick="Aim.start()">PRESS START TO DEPLOY</div>
                     </div>
                 </div>
             </div>
@@ -436,12 +427,12 @@
                     <div id="stroop-word">色彩</div>
                 </div>
                 <div class="stroop-btns">
-                    <button class="stroop-btn" style="background:var(--danger-color);" onclick="Stroop.click('红')">红</button>
-                    <button class="stroop-btn" style="background:var(--accent-color);" onclick="Stroop.click('蓝')">蓝</button>
-                    <button class="stroop-btn" style="background:var(--success-color);" onclick="Stroop.click('绿')">绿</button>
-                    <button class="stroop-btn" style="background:var(--warning-color);" onclick="Stroop.click('黄')">黄</button>
-                    <button class="stroop-btn" style="background:var(--purple-color);" onclick="Stroop.click('紫')">紫</button>
-                    <button class="stroop-btn" style="background:#111827; color:white; border:1px solid #4b5563" onclick="Stroop.click('黑')">黑</button>
+                    <button class="stroop-btn" style="background:#f04444;" onclick="Stroop.click('红')">红</button>
+                    <button class="stroop-btn" style="background:#3b82f6; color:white;" onclick="Stroop.click('蓝')">蓝</button>
+                    <button class="stroop-btn" style="background:#20d060; color:white;" onclick="Stroop.click('绿')">绿</button>
+                    <button class="stroop-btn" style="background:#eab308; color:#0a0e14;" onclick="Stroop.click('黄')">黄</button>
+                    <button class="stroop-btn" style="background:#a070e0; color:white;" onclick="Stroop.click('紫')">紫</button>
+                    <button class="stroop-btn" style="background:#1f2937; color:white; border:2px solid #9ca3af" onclick="Stroop.click('黑')">黑</button>
                 </div>
             </div>
         </div>
@@ -473,7 +464,7 @@
                     <div>SCORE: <span id="mv-score-hud" class="hud-val hud-target">0</span></div>
                 </div>
                 <div id="moving-container" onmousedown="Moving.miss(event)">
-                    <div id="moving-overlay" class="overlay" style="display:flex; font-size:30px; text-align:center; flex-direction:column;">点击START开始<br><span style="font-size:16px; margin-top:10px;">拦截所有移动目标</span></div>
+                    <div id="moving-overlay" class="overlay" style="display:flex; font-size:30px; text-align:center; flex-direction:column;"><div class="overlay-title">TARGET INTERCEPT</div><div class="overlay-sub">INTERCEPT ALL MOVING TARGETS</div><div class="overlay-action" onclick="Moving.start()">PRESS START TO DEPLOY</div></div>
                 </div>
             </div>
         </div>
@@ -616,11 +607,26 @@
         </div>
     </div>
 
+    <script src="js/utils.js" defer></script>
+    <script src="js/storage.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/leaderboard.js" defer></script>
+    <script src="js/radar.js" defer></script>
+    <script src="js/schulte.js" defer></script>
+    <script src="js/reaction.js" defer></script>
+    <script src="js/aim.js" defer></script>
+    <script src="js/stroop.js" defer></script>
+    <script src="js/moving.js" defer></script>
+    <script src="js/speedtest.js" defer></script>
+    <script src="js/snake.js" defer></script>
+    <script src="js/tile2048.js" defer></script>
+    <script src="js/minesweeper.js" defer></script>
+    <script src="js/breakout.js" defer></script>
+    <script src="js/entertainment.js" defer></script>
+    <script src="js/routine.js" defer></script>
+    <script src="js/app.js" defer></script>
     <script>
-        window.onload = function() {
-            App.init();
-        };
+        document.addEventListener('DOMContentLoaded', function() { App.init(); });
     </script>
-    <script src="js/app.js"></script>
 </body>
 </html>
