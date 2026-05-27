@@ -1,0 +1,17 @@
+{
+  "name": "AimCore 战术特训台",
+  "short_name": "AimCore",
+  "description": "W的FPS训练桌面版，包含索敌、反应、瞄准和抗压训练模块。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1f2937",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
