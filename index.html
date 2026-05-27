@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -143,32 +144,32 @@
         <button class="theme-toggle" onclick="toggleTheme()">🌙 夜间模式</button>
         <button id="install-btn" class="theme-toggle" style="display:none;" onclick="promptInstall()">📥 安装到桌面</button>
         <button id="update-btn" class="theme-toggle" style="display:none;">🔄 更新可用</button>
-        <button id="auth-btn" class="auth-btn" onclick="openAuthModal()">👤 登录同步</button>
+        <button id="auth-btn" class="auth-btn" onclick="Auth.openModal()">👤 登录同步</button>
     </div>
     <div id="pwa-toast" class="pwa-toast"></div>
 
     <!-- Auth Modal -->
     <div id="auth-overlay" class="auth-overlay">
         <div class="auth-card" id="auth-card">
-            <button class="btn-close" onclick="closeAuthModal()">&times;</button>
+            <button class="btn-close" onclick="Auth.closeModal()">&times;</button>
 
             <!-- 登录表单 -->
             <div id="auth-login-section">
             <h2>登录账号</h2>
             <p>登录后可云端备份训练数据，参与全球排行榜</p>
             <div class="auth-tabs" style="display:flex;gap:0;margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">
-                <button id="auth-tab-magiclink" class="auth-tab-btn active" onclick="switchAuthTab('magiclink')" style="flex:1;padding:8px 0;border:none;background:var(--accent-color);color:#fff;font-size:13px;font-weight:bold;cursor:pointer;transition:all 0.2s;">魔法链接</button>
-                <button id="auth-tab-password" class="auth-tab-btn" onclick="switchAuthTab('password')" style="flex:1;padding:8px 0;border:none;background:var(--bg-color);color:var(--text-sub);font-size:13px;font-weight:bold;cursor:pointer;transition:all 0.2s;">邮箱密码</button>
+                <button id="auth-tab-magiclink" class="auth-tab-btn active" onclick="Auth.switchAuthTab('magiclink')" style="flex:1;padding:8px 0;border:none;background:var(--accent-color);color:#fff;font-size:13px;font-weight:bold;cursor:pointer;transition:all 0.2s;">魔法链接</button>
+                <button id="auth-tab-password" class="auth-tab-btn" onclick="Auth.switchAuthTab('password')" style="flex:1;padding:8px 0;border:none;background:var(--bg-color);color:var(--text-sub);font-size:13px;font-weight:bold;cursor:pointer;transition:all 0.2s;">邮箱密码</button>
             </div>
             <div id="auth-error" class="auth-error"></div>
             <input type="email" id="auth-email" placeholder="请输入邮箱地址" autocomplete="email">
             <input type="password" id="auth-password" placeholder="设置密码（6位以上）" autocomplete="current-password">
             <div id="auth-btns" style="display:flex;gap:8px;">
-                <button class="btn-action" id="auth-register-btn" onclick="handleAuthRegister()" style="flex:1;">注册</button>
-                <button class="btn-action" id="auth-login-btn" onclick="handleAuthLogin()" style="flex:1;">登录</button>
+                <button class="btn-action" id="auth-register-btn" onclick="Auth.handleAuthRegister()" style="flex:1;">注册</button>
+                <button class="btn-action" id="auth-login-btn" onclick="Auth.handleAuthLogin()" style="flex:1;">登录</button>
             </div>
-            <button class="btn-action" id="auth-magiclink-btn" onclick="handleAuthMagicLink()" style="display:none;">📧 发送魔法链接</button>
-            <div class="auth-switch"><a onclick="closeAuthModal()">暂不登录，使用本地模式</a></div>
+            <button class="btn-action" id="auth-magiclink-btn" onclick="Auth.handleAuthMagicLink()" style="display:none;">📧 发送魔法链接</button>
+            <div class="auth-switch"><a onclick="Auth.closeModal()">暂不登录，使用本地模式</a></div>
             </div>
 
             <!-- 个人资料编辑 -->
@@ -203,9 +204,9 @@
                 <option value="PH">🇵🇭 菲律宾</option>
             </select>
             <div style="display:flex;gap:8px;margin-top:16px;">
-                <button class="btn-action" onclick="saveProfile()" style="flex:1;">💾 保存</button>
+                <button class="btn-action" onclick="Auth.saveProfile()" style="flex:1;">💾 保存</button>
             </div>
-            <button class="btn-danger" style="width:100%;margin-top:12px;" onclick="handleLogout();closeAuthModal();">退出登录</button>
+            <button class="btn-danger" style="width:100%;margin-top:12px;" onclick="Auth.logout();Auth.closeModal();">退出登录</button>
             </div>
         </div>
     </div>
@@ -679,255 +680,8 @@
         const BREAKOUT_BEST_KEY = 'breakout_best_score';
         const SPEED_TEST_KEY = 'speedtest_best_cps';
 
-        let currentUser = null;
         let leaderboardModule = 'schulte';
         let leaderboardSubKey = '5x5';
-
-        // ==================== Auth 逻辑 ====================
-        let currentAuthTab = 'password';
-
-        function openAuthModal() {
-            if (currentUser) {
-                // 已登录 → 显示个人资料编辑
-                document.getElementById('auth-login-section').style.display = 'none';
-                document.getElementById('auth-profile-section').style.display = 'block';
-                document.getElementById('profile-username').value = currentUser.username || '';
-                document.getElementById('profile-country').value = currentUser.country || '';
-                document.getElementById('profile-error').style.display = 'none';
-            } else {
-                document.getElementById('auth-login-section').style.display = 'block';
-                document.getElementById('auth-profile-section').style.display = 'none';
-                document.getElementById('auth-email').value = '';
-                document.getElementById('auth-password').value = '';
-                document.getElementById('auth-error').style.display = 'none';
-                currentAuthTab = 'password';
-                updateAuthTabUI();
-            }
-            document.getElementById('auth-overlay').classList.add('open');
-        }
-
-        function closeAuthModal() {
-            document.getElementById('auth-overlay').classList.remove('open');
-        }
-
-        function switchAuthTab(tab) {
-            currentAuthTab = tab;
-            updateAuthTabUI();
-        }
-
-        function updateAuthTabUI() {
-            var magicTab = document.getElementById('auth-tab-magiclink');
-            var pwdTab = document.getElementById('auth-tab-password');
-            var pwdField = document.getElementById('auth-password');
-            var btnGroup = document.getElementById('auth-btns');
-            var magicBtn = document.getElementById('auth-magiclink-btn');
-
-            if (currentAuthTab === 'magiclink') {
-                magicTab.style.background = 'var(--accent-color)';
-                magicTab.style.color = '#fff';
-                pwdTab.style.background = 'var(--bg-color)';
-                pwdTab.style.color = 'var(--text-sub)';
-                pwdField.style.display = 'none';
-                btnGroup.style.display = 'none';
-                magicBtn.style.display = 'block';
-            } else {
-                magicTab.style.background = 'var(--bg-color)';
-                magicTab.style.color = 'var(--text-sub)';
-                pwdTab.style.background = 'var(--accent-color)';
-                pwdTab.style.color = '#fff';
-                pwdField.style.display = 'block';
-                btnGroup.style.display = 'flex';
-                magicBtn.style.display = 'none';
-            }
-            document.getElementById('auth-error').style.display = 'none';
-        }
-
-        // 魔法链接
-        async function handleAuthMagicLink() {
-            var email = document.getElementById('auth-email').value.trim();
-            var errEl = document.getElementById('auth-error');
-            var client = Storage.getSupabase();
-            if (!email) { errEl.innerText = '请输入邮箱地址'; errEl.style.display = 'block'; return; }
-            if (!client) { errEl.innerText = 'SDK 未就绪，请刷新后重试'; errEl.style.display = 'block'; return; }
-            errEl.style.display = 'none';
-            try {
-                var _r = await client.auth.signInWithOtp({ email: email, options: { shouldCreateUser: true } });
-                if (_r.error) throw _r.error;
-                showToast('魔法链接已发送到 ' + email + '，请查收邮件');
-                closeAuthModal();
-            } catch (e) {
-                errEl.innerText = e.message || '发送失败';
-                errEl.style.display = 'block';
-            }
-        }
-
-        // 邮箱密码 — 注册
-        async function handleAuthRegister() {
-            var email = document.getElementById('auth-email').value.trim();
-            var password = document.getElementById('auth-password').value;
-            var errEl = document.getElementById('auth-error');
-            var client = Storage.getSupabase();
-            if (!email) { errEl.innerText = '请输入邮箱地址'; errEl.style.display = 'block'; return; }
-            if (!password || password.length < 6) { errEl.innerText = '密码至少6位'; errEl.style.display = 'block'; return; }
-            if (!client) { errEl.innerText = 'SDK 未就绪，请刷新后重试'; errEl.style.display = 'block'; return; }
-            errEl.style.display = 'none';
-            try {
-                var _r = await client.auth.signUp({
-                    email: email, password: password,
-                    options: { data: { username: email.split('@')[0] } }
-                });
-                if (_r.error) throw _r.error;
-                if (_r.data.user) {
-                    currentUser = { id: _r.data.user.id, email: _r.data.user.email, username: email.split('@')[0], country: '' };
-                    updateAuthButton();
-                    await ensureProfile(_r.data.user.id, _r.data.user.email, true);
-                    await Storage.syncPullAll();
-                    closeAuthModal();
-                    showToast('注册成功，数据将自动云端同步');
-                }
-            } catch (e) {
-                errEl.innerText = e.message || '注册失败';
-                errEl.style.display = 'block';
-            }
-        }
-
-        // 邮箱密码 — 登录
-        async function handleAuthLogin() {
-            var email = document.getElementById('auth-email').value.trim();
-            var password = document.getElementById('auth-password').value;
-            var errEl = document.getElementById('auth-error');
-            var client = Storage.getSupabase();
-            if (!email) { errEl.innerText = '请输入邮箱地址'; errEl.style.display = 'block'; return; }
-            if (!password) { errEl.innerText = '请输入密码'; errEl.style.display = 'block'; return; }
-            if (!client) { errEl.innerText = 'SDK 未就绪，请刷新后重试'; errEl.style.display = 'block'; return; }
-            errEl.style.display = 'none';
-            try {
-                var _r = await client.auth.signInWithPassword({ email: email, password: password });
-                if (_r.error) throw _r.error;
-                if (_r.data.user) {
-                    currentUser = { id: _r.data.user.id, email: _r.data.user.email, username: _r.data.user.user_metadata?.username || email.split('@')[0], country: '' };
-                    updateAuthButton();
-                    await ensureProfile(_r.data.user.id, _r.data.user.email, true);
-                    await Storage.syncPullAll();
-                    closeAuthModal();
-                    showToast('登录成功，正在同步云端数据...');
-                }
-            } catch (e) {
-                errEl.innerText = e.message || '登录失败';
-                errEl.style.display = 'block';
-            }
-        }
-
-        function updateAuthButton() {
-            const btn = document.getElementById('auth-btn');
-            if (!btn) return;
-            if (currentUser) {
-                btn.className = 'auth-btn logged-in';
-                var flag = Utils.countryToFlag(currentUser.country);
-                var display = flag + ' ' + currentUser.username;
-                btn.innerHTML = '<span class="user-badge">☁️ ' + display + ' <span class="logout-link" onclick="event.stopPropagation();handleLogout()">退出</span></span>';
-            } else {
-                btn.className = 'auth-btn';
-                btn.innerText = '👤 登录同步';
-            }
-        }
-
-        async function detectCountry() {
-            try {
-                var r = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
-                if (r.ok) {
-                    var d = await r.json();
-                    return d.country_code || '';
-                }
-            } catch (e) { /* ignore */ }
-            return '';
-        }
-
-        async function saveProfile() {
-            var username = document.getElementById('profile-username').value.trim();
-            var country = document.getElementById('profile-country').value;
-            var errEl = document.getElementById('profile-error');
-            if (!username) { errEl.innerText = '显示名称不能为空'; errEl.style.display = 'block'; return; }
-            var client = Storage.getSupabase();
-            if (!client) { errEl.innerText = '云端未连接'; errEl.style.display = 'block'; return; }
-            errEl.style.display = 'none';
-            try {
-                await client.rpc('update_profile', { p_user_id: currentUser.id, p_username: username, p_country: country });
-                currentUser.username = username;
-                currentUser.country = country;
-                updateAuthButton();
-                closeAuthModal();
-                // 刷新所有已显示的排行榜
-                if (currentView === 'overview') fetchMiniLeaderboard();
-                var cfg = MODULE_LB_MAP[currentView];
-                if (cfg) fetchModuleLB(currentView);
-                showToast('资料已更新');
-            } catch (e) {
-                errEl.innerText = '保存失败: ' + (e.message || '未知错误');
-                errEl.style.display = 'block';
-            }
-        }
-
-        async function handleLogout() {
-            const client = Storage.getSupabase();
-            if (client) { await client.auth.signOut(); }
-            currentUser = null;
-            updateAuthButton();
-            showToast('已退出登录，数据保留在本地');
-        }
-
-        async function ensureProfile(userId, email, detectCountryFlag) {
-            var client = Storage.getSupabase();
-            if (!client) return;
-            try {
-                var _c = await client.from('profiles').select('id,username,country').eq('id', userId).maybeSingle();
-                if (_c.error) throw _c.error;
-                if (!_c.data) {
-                    var username = email ? email.split('@')[0] : 'player';
-                    var cty = detectCountryFlag ? (await detectCountry()) : '';
-                    await client.from('profiles').insert({ id: userId, username: username, country: cty });
-                    currentUser.username = username;
-                    currentUser.country = cty;
-                } else {
-                    // 读取已保存的 profile 信息
-                    currentUser.username = _c.data.username;
-                    currentUser.country = _c.data.country || '';
-                    // 如果还没有国家信息，尝试检测
-                    if (!currentUser.country && detectCountryFlag) {
-                        currentUser.country = await detectCountry();
-                        if (currentUser.country) {
-                            await client.rpc('update_profile', { p_user_id: userId, p_username: null, p_country: currentUser.country });
-                        }
-                    }
-                }
-            } catch (e) { console.warn('ensureProfile error:', e.message); }
-        }
-
-        async function restoreAuthState() {
-            const client = Storage.getSupabase();
-            if (!client) return;
-            try {
-                var _s2 = await client.auth.getSession();
-                if (_s2.error) throw _s2.error;
-                var session = _s2.data.session;
-                if (session && session.user) {
-                    currentUser = {
-                        id: session.user.id, email: session.user.email,
-                        username: session.user.user_metadata?.username || session.user.email.split('@')[0],
-                        country: ''
-                    };
-                    await ensureProfile(session.user.id, session.user.email, true);
-                    updateAuthButton();
-                    await Storage.syncPullAll();
-                    if (window.location.hash && window.location.hash.includes('access_token')) {
-                        window.history.replaceState(null, '', window.location.pathname);
-                    }
-                }
-            } catch (e) {
-                console.warn('Auth restore failed:', e.message);
-                showToast('登录恢复失败，请重新登录');
-            }
-        }
 
         // ==================== 排行榜逻辑 ====================
         const LEADERBOARD_MODULES = [
@@ -994,7 +748,7 @@
                 let html = '<table class="leaderboard-table"><tr><th>排名</th><th>玩家</th><th>成绩</th><th>评级</th></tr>';
                 rows.forEach((row, i) => {
                     const rankClass = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
-                    const isMe = currentUser && row.user_id === currentUser.id;
+                    const isMe = Auth.currentUser && row.user_id === Auth.currentUser.id;
                     const rowClass = isMe ? 'me-highlight' : '';
                     var flag = Utils.countryToFlag(row.country);
                     html += `<tr class="${rowClass}"><td class="${rankClass}">${i + 1}</td><td>${flag} ${row.username}${isMe ? ' ⭐' : ''}</td><td style="font-weight:bold;font-family:monospace;">${Utils.formatScore(leaderboardModule, row.score_data)}</td><td style="font-size:12px;">${row.rank || '-'}</td></tr>`;
@@ -1055,7 +809,7 @@
                 var html = '<table class="leaderboard-table"><tr><th>#</th><th>玩家</th><th>成绩</th></tr>';
                 rows.forEach(function(row, i) {
                     var rc = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
-                    var isMe = currentUser && row.user_id === currentUser.id;
+                    var isMe = Auth.currentUser && row.user_id === Auth.currentUser.id;
                     var rowClass = isMe ? 'me-highlight' : '';
                     var flag = Utils.countryToFlag(row.country);
                     html += '<tr class="' + rowClass + '"><td class="' + rc + '">' + (i + 1) + '</td><td>' + flag + ' ' + row.username + (isMe ? ' ⭐' : '') + '</td><td style="font-weight:bold;font-family:monospace;font-size:12px;">' + Utils.formatScore(cfg.module, row.score_data) + '</td></tr>';
@@ -1137,7 +891,7 @@
                 var html = '<table class="leaderboard-table"><tr><th>#</th><th>玩家</th><th>成绩</th></tr>';
                 rows.forEach(function(row, i) {
                     var rc = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
-                    var isMe = currentUser && row.user_id === currentUser.id;
+                    var isMe = Auth.currentUser && row.user_id === Auth.currentUser.id;
                     var rowClass = isMe ? 'me-highlight' : '';
                     var flag = Utils.countryToFlag(row.country);
                     html += '<tr class="' + rowClass + '"><td class="' + rc + '">' + (i + 1) + '</td><td>' + flag + ' ' + row.username + (isMe ? ' ⭐' : '') + '</td><td style="font-weight:bold;font-family:monospace;font-size:12px;">' + Utils.formatScore(cfg.module, row.score_data) + '</td></tr>';
@@ -2440,7 +2194,7 @@
             selectMiniGame('snake');
             resetSnake();
             attachEntertainmentTouch();
-            restoreAuthState().then(function() {
+            Auth.restoreState().then(function() {
                 if (window.__supabase) { fetchMiniLeaderboard(); }
             });
         };

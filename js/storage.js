@@ -34,7 +34,7 @@ window.Storage = (function() {
       session = _s.data.session;
     } catch (e) { console.warn('getSession error:', e.message); return; }
     if (!session) {
-      if (currentUser) { showToast('登录已过期，请重新登录'); currentUser = null; updateAuthButton(); }
+      if (Auth.currentUser) { showToast('登录已过期，请重新登录'); Auth.currentUser = null; Auth.updateButton(); }
       return;
     }
     const mapping = SUPABASE_CONFIG.keyToModule[key];
