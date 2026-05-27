@@ -166,7 +166,7 @@ window.Storage = (function() {
       if (error) throw error;
       if (bests && bests.length > 0) {
         mergeCloudBests(bests);
-        renderSchulteRecords();
+        Schulte.renderRecords();
         renderRtRecords();
         renderExtraPB();
         updateRadarChart();
