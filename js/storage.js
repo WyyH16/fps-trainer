@@ -264,7 +264,7 @@ window.Storage = (function() {
           const local = parseInt(localStorage.getItem('snake_best_score') || '0');
           if (b.score_data.score > local) {
             localStorage.setItem('snake_best_score', String(b.score_data.score));
-            snakeBestScore = b.score_data.score;
+            Snake.bestScore = b.score_data.score;
           }
           break;
         }

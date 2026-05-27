@@ -16,6 +16,7 @@
     <script src="js/stroop.js"></script>
     <script src="js/moving.js"></script>
     <script src="js/speedtest.js"></script>
+    <script src="js/snake.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -535,14 +536,14 @@
                         <canvas id="snake-canvas" class="snake-canvas" width="440" height="440"></canvas>
                     </div>
                     <div class="snake-controls">
-                        <button class="mini-btn" onclick="startSnake()">▶ 开始</button>
-                        <button class="mini-btn" onclick="resetSnake()">↺ 重置</button>
+                        <button class="mini-btn" onclick="Snake.start()">▶ 开始</button>
+                        <button class="mini-btn" onclick="Snake.reset()">↺ 重置</button>
                     </div>
                     <div class="touch-control-area">
-                        <button class="touch-btn" onclick="changeSnakeDirection('up')">↑</button>
-                        <button class="touch-btn" onclick="changeSnakeDirection('left')">←</button>
-                        <button class="touch-btn" onclick="changeSnakeDirection('down')">↓</button>
-                        <button class="touch-btn" onclick="changeSnakeDirection('right')">→</button>
+                        <button class="touch-btn" onclick="Snake.changeDir('up')">↑</button>
+                        <button class="touch-btn" onclick="Snake.changeDir('left')">←</button>
+                        <button class="touch-btn" onclick="Snake.changeDir('down')">↓</button>
+                        <button class="touch-btn" onclick="Snake.changeDir('right')">→</button>
                     </div>
                 </div>
 
@@ -634,20 +635,6 @@
         }
 
         let entertainmentMode = 'snake';
-        // ---- 贪吃蛇 (polished) ----
-        let snakeInterval = null;
-        let snakeDirection = 'right';
-        let snakeNextDirection = 'right';
-        let snakeSegments = [];
-        let snakeFood = null;
-        let snakeScore = 0;
-        let snakeParticles = [];
-        let snakeFoodPulse = 0;
-        const snakeCols = 22;
-        const snakeRows = 22;
-        let snakeCanvas = null;
-        let snakeCtx = null;
-        let snakeSpeed = 110; // ms per tick, decreases as score grows
 
         // ---- 2048 (polished) ----
         let grid2048 = [];
@@ -671,11 +658,9 @@
         let bkCanvas = null, bkCtx = null;
         let bkPowerUp = null; // {type, x, y, dy}
 
-        let snakeBestScore = 0;
         let best2048Score = 0;
         let bestMinesweeper = {}; // keyed by difficulty string e.g. "9x9"
         let bestBreakoutScore = 0;
-        const SNAKE_BEST_KEY = 'snake_best_score';
         const GAME_2048_BEST_KEY = '2048_best_score';
         const GAME_2048_STATE_KEY = '2048_state';
         const MINESWEEPER_BEST_KEY = 'minesweeper_bests';
@@ -705,12 +690,12 @@
             };
             document.getElementById('entertainment-info').innerText = infoMap[game] || '';
             // Reset game-specific state
-            clearInterval(snakeInterval);
+            clearInterval(Snake.interval);
             clearInterval(msTimerInterval);
             if (bkAnimFrame) cancelAnimationFrame(bkAnimFrame);
             bkPlaying = false;
             if (game === 'snake') {
-                resetSnake();
+                Snake.reset();
             } else if (game === '2048') {
                 if (grid2048.length === 0) { start2048(); } else { render2048(); }
             } else if (game === 'minesweeper') {
@@ -721,189 +706,6 @@
                 else drawBreakoutIdle();
             }
             LB.fetchEntertainment(game);
-        }
-
-        // ============ 贪吃蛇 POLISHED ============
-        function initSnakeCanvas() {
-            if (snakeCanvas) return;
-            snakeCanvas = document.getElementById('snake-canvas');
-            snakeCtx = snakeCanvas.getContext('2d');
-        }
-
-        function startSnake() {
-            initSnakeCanvas();
-            resetSnake();
-            clearInterval(snakeInterval);
-            snakeSpeed = 110;
-            snakeInterval = setInterval(stepSnake, snakeSpeed);
-            document.getElementById('snake-status').style.display = 'flex';
-        }
-
-        function resetSnake() {
-            initSnakeCanvas();
-            clearInterval(snakeInterval);
-            snakeDirection = 'right';
-            snakeNextDirection = 'right';
-            snakeSegments = [
-                { x: 10, y: 11 },
-                { x: 9, y: 11 },
-                { x: 8, y: 11 }
-            ];
-            snakeScore = 0;
-            snakeParticles = [];
-            spawnSnakeFood();
-            renderSnake();
-            document.getElementById('snake-score').innerText = '🐍 得分: 0';
-            document.getElementById('snake-best').innerText = '🏆 最高: ' + (snakeBestScore || '--');
-            document.getElementById('snake-status').style.display = 'flex';
-        }
-
-        function spawnSnakeFood() {
-            var pos;
-            do {
-                pos = { x: Math.floor(Math.random() * snakeCols), y: Math.floor(Math.random() * snakeRows) };
-            } while (snakeSegments.some(function(seg) { return seg.x === pos.x && seg.y === pos.y; }));
-            snakeFood = pos;
-        }
-
-        function stepSnake() {
-            snakeDirection = snakeNextDirection;
-            var head = snakeSegments[0];
-            var delta = { left: {x:-1,y:0}, right: {x:1,y:0}, up: {x:0,y:-1}, down: {x:0,y:1} }[snakeDirection] || {x:0,y:0};
-            var next = { x: head.x + delta.x, y: head.y + delta.y };
-            var hitWall = next.x < 0 || next.x >= snakeCols || next.y < 0 || next.y >= snakeRows;
-            var hitSelf = snakeSegments.some(function(seg) { return seg.x === next.x && seg.y === next.y; });
-            if (hitWall || hitSelf) {
-                clearInterval(snakeInterval);
-                // death particles
-                for (var i = 0; i < snakeSegments.length; i++) {
-                    var seg = snakeSegments[i];
-                    for (var j = 0; j < 3; j++) {
-                        snakeParticles.push({ x: (seg.x + 0.5) * (snakeCanvas.width / snakeCols), y: (seg.y + 0.5) * (snakeCanvas.height / snakeRows), vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, life: 1, color: 'hsl(' + (140 - i * 3) + ',70%,50%)' });
-                    }
-                }
-                renderSnake();
-                saveSnakeBest();
-                showToast('贪吃蛇结束，得分 ' + snakeScore);
-                return;
-            }
-            snakeSegments.unshift(next);
-            if (next.x === snakeFood.x && next.y === snakeFood.y) {
-                snakeScore += 10;
-                // eat particles
-                var fx = (snakeFood.x + 0.5) * (snakeCanvas.width / snakeCols);
-                var fy = (snakeFood.y + 0.5) * (snakeCanvas.height / snakeRows);
-                for (var k = 0; k < 8; k++) {
-                    snakeParticles.push({ x: fx, y: fy, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5, life: 1, color: '#facc15' });
-                }
-                // score pop
-                showSnakeScorePop(fx, fy);
-                spawnSnakeFood();
-                // speed up every 50 points
-                if (snakeScore % 50 === 0 && snakeSpeed > 50) {
-                    snakeSpeed -= 8;
-                    clearInterval(snakeInterval);
-                    snakeInterval = setInterval(stepSnake, snakeSpeed);
-                }
-            } else {
-                snakeSegments.pop();
-            }
-            // decay particles
-            snakeParticles = snakeParticles.filter(function(p) { p.life -= 0.04; return p.life > 0; });
-            document.getElementById('snake-score').innerText = '🐍 得分: ' + snakeScore;
-            renderSnake();
-        }
-
-        function showSnakeScorePop(x, y) {
-            var wrap = document.getElementById('snake-canvas-wrap');
-            if (!wrap) return;
-            var el = document.createElement('div');
-            el.className = 'snake-score-pop';
-            el.innerText = '+10';
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
-            wrap.appendChild(el);
-            setTimeout(function() { if (el.parentNode) el.remove(); }, 700);
-        }
-
-        function renderSnake() {
-            if (!snakeCtx) return;
-            var w = snakeCanvas.width, h = snakeCanvas.height;
-            var cell = w / snakeCols;
-            var ctx = snakeCtx;
-
-            // background with subtle grid
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(0, 0, w, h);
-            ctx.strokeStyle = 'rgba(30,41,59,0.6)';
-            ctx.lineWidth = 0.5;
-            for (var i = 0; i <= snakeCols; i++) {
-                ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, h); ctx.stroke();
-            }
-            for (var j = 0; j <= snakeRows; j++) {
-                ctx.beginPath(); ctx.moveTo(0, j * cell); ctx.lineTo(w, j * cell); ctx.stroke();
-            }
-
-            // border wall glow
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(1.5, 1.5, w - 3, h - 3);
-
-            // draw snake segments with gradient
-            var len = snakeSegments.length;
-            for (var s = len - 1; s >= 0; s--) {
-                var seg = snakeSegments[s];
-                var ratio = s / Math.max(len - 1, 1);
-                var r = Math.round(16 + ratio * 30);
-                var g = Math.round(185 - ratio * 100);
-                var b = Math.round(129 - ratio * 70);
-                var alpha = 1 - ratio * 0.3;
-                var pad = s === 0 ? 1 : 2;
-                ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
-                ctx.shadowColor = s === 0 ? 'rgba(16,185,129,0.6)' : 'transparent';
-                ctx.shadowBlur = s === 0 ? 8 : 0;
-                Utils.roundRect(ctx, seg.x * cell + pad, seg.y * cell + pad, cell - pad * 2, cell - pad * 2, s === 0 ? 6 : 4);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
-
-            // eyes on head
-            var head = snakeSegments[0];
-            var hx = head.x * cell, hy = head.y * cell;
-            var eyeR = cell * 0.15;
-            var dirMap = { right: [0.65, 0.3, 0.65, 0.7], left: [0.35, 0.3, 0.35, 0.7], up: [0.3, 0.35, 0.7, 0.35], down: [0.3, 0.65, 0.7, 0.65] };
-            var ep = dirMap[snakeDirection] || dirMap['right'];
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.arc(hx + cell * ep[0], hy + cell * ep[1], eyeR, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(hx + cell * ep[2], hy + cell * ep[3], eyeR, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#111827';
-            ctx.beginPath(); ctx.arc(hx + cell * ep[0], hy + cell * ep[1], eyeR * 0.55, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(hx + cell * ep[2], hy + cell * ep[3], eyeR * 0.55, 0, Math.PI * 2); ctx.fill();
-
-            // food with pulse glow
-            if (snakeFood) {
-                snakeFoodPulse += 0.08;
-                var glow = Math.sin(snakeFoodPulse) * 0.4 + 0.6;
-                var fcx = (snakeFood.x + 0.5) * cell;
-                var fcy = (snakeFood.y + 0.5) * cell;
-                var fr = cell * 0.38;
-                ctx.shadowColor = 'rgba(250,204,21,' + glow + ')';
-                ctx.shadowBlur = 10 + glow * 6;
-                var grad = ctx.createRadialGradient(fcx, fcy, fr * 0.2, fcx, fcy, fr);
-                grad.addColorStop(0, '#fef08a');
-                grad.addColorStop(0.6, '#facc15');
-                grad.addColorStop(1, '#eab308');
-                ctx.fillStyle = grad;
-                ctx.beginPath(); ctx.arc(fcx, fcy, fr, 0, Math.PI * 2); ctx.fill();
-                ctx.shadowBlur = 0;
-            }
-
-            // particles
-            for (var p = 0; p < snakeParticles.length; p++) {
-                var pt = snakeParticles[p];
-                ctx.fillStyle = pt.color.replace(')', ',' + pt.life + ')').replace('hsl', 'hsla');
-                ctx.beginPath(); ctx.arc(pt.x, pt.y, 3 * pt.life, 0, Math.PI * 2); ctx.fill();
-            }
         }
 
         // ============ 2048 POLISHED ============
@@ -924,12 +726,12 @@
         }
 
         function loadGameData() {
-            snakeBestScore = parseInt(localStorage.getItem(SNAKE_BEST_KEY) || '0', 10) || 0;
+            Snake.bestScore = parseInt(localStorage.getItem('snake_best_score') || '0', 10) || 0;
             best2048Score = parseInt(localStorage.getItem(GAME_2048_BEST_KEY) || '0', 10) || 0;
             bestMinesweeper = JSON.parse(localStorage.getItem(MINESWEEPER_BEST_KEY) || '{}');
             bestBreakoutScore = parseInt(localStorage.getItem(BREAKOUT_BEST_KEY) || '0', 10) || 0;
             SpeedTest.best = parseFloat(localStorage.getItem('speedtest_best_cps') || '0') || 0;
-            updateSnakeBestUI();
+            Snake.updateBestUI();
             update2048BestUI();
             updateMinesweeperBestUI();
             updateBreakoutBestUI();
@@ -999,16 +801,6 @@
             }
         }
 
-        function saveSnakeBest() {
-            if (snakeScore > snakeBestScore) {
-                snakeBestScore = snakeScore;
-                Storage.syncSetItem(SNAKE_BEST_KEY, String(snakeBestScore));
-                updateSnakeBestUI();
-                showToast('已保存贪吃蛇本地最高分：' + snakeBestScore);
-                if (entertainmentMode === 'snake') LB.fetchEntertainment('snake');
-            }
-        }
-
         function save2048Best() {
             if (score2048 > best2048Score) {
                 best2048Score = score2048;
@@ -1017,11 +809,6 @@
                 showToast('已保存2048本地最高分：' + best2048Score);
                 if (entertainmentMode === '2048') LB.fetchEntertainment('2048');
             }
-        }
-
-        function updateSnakeBestUI() {
-            var el = document.getElementById('snake-best');
-            if (el) el.innerText = '🏆 最高: ' + (snakeBestScore || '--');
         }
 
         function update2048BestUI() {
@@ -1049,13 +836,6 @@
                 }
             } catch (e) {
                 console.warn('加载2048本地状态失败', e);
-            }
-        }
-
-        function changeSnakeDirection(direction) {
-            const opposites = { up: 'down', down: 'up', left: 'right', right: 'left' };
-            if (opposites[direction] !== snakeDirection) {
-                snakeNextDirection = direction;
             }
         }
 
@@ -1092,7 +872,7 @@
             const direction = Math.abs(dx) > Math.abs(dy)
                 ? (dx > 0 ? 'right' : 'left')
                 : (dy > 0 ? 'down' : 'up');
-            if (mode === 'snake') changeSnakeDirection(direction);
+            if (mode === 'snake') Snake.changeDir(direction);
             else move2048(direction);
         }
 
@@ -1799,9 +1579,7 @@
             if (entertainmentMode === 'snake') {
                 var valid = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
                 var next = valid[direction];
-                if (!next) return;
-                var opposites = { up: 'down', down: 'up', left: 'right', right: 'left' };
-                if (opposites[next] !== snakeDirection) { snakeNextDirection = next; }
+                if (next) Snake.changeDir(next);
             } else if (entertainmentMode === '2048') {
                 var mapping = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
                 var dir = mapping[direction];
@@ -1820,7 +1598,7 @@
             clearInterval(timerInterval);
             clearInterval(Aim.interval);
             clearInterval(Stroop.interval);
-            clearInterval(snakeInterval);
+            clearInterval(Snake.interval);
             clearInterval(msTimerInterval);
             if (bkAnimFrame) cancelAnimationFrame(bkAnimFrame);
             bkPlaying = false;
@@ -1901,7 +1679,7 @@
             loadGameData();
             loadWeather();
             selectMiniGame('snake');
-            resetSnake();
+            Snake.reset();
             attachEntertainmentTouch();
             Auth.restoreState().then(function() {
                 if (window.__supabase) { LB.fetchMini(); }
