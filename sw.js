@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aimcore-v3';
+const CACHE_NAME = 'aimcore-v4';
 const urlsToCache = [
   './index.html',
   './icon.png',
