@@ -14,6 +14,7 @@
     <script src="js/reaction.js"></script>
     <script src="js/aim.js"></script>
     <script src="js/stroop.js"></script>
+    <script src="js/moving.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <script>
@@ -449,7 +450,7 @@
                         <div class="stat-box"><div style="font-size:12px;">生命值</div><div class="stat-val" id="mv-lives" style="color:var(--danger-color);">❤️❤️❤️</div></div>
                     </div>
                 </div>
-                <button class="btn-action" onclick="startMoving()">START 开始拦截</button>
+                <button class="btn-action" onclick="Moving.start()">START 开始拦截</button>
                 <div class="module-card" style="margin-top: 20px;">
                     <h3 class="module-title">🏆 飞靶 PB</h3>
                     <div class="stat-box"><div style="font-size:12px;">最高拦截得分</div><div class="stat-val" id="mv-pb">--</div></div>
@@ -463,7 +464,7 @@
                 <div class="game-header">
                     <div>SCORE: <span id="mv-score-hud" class="hud-val hud-target">0</span></div>
                 </div>
-                <div id="moving-container" onmousedown="movingMiss(event)">
+                <div id="moving-container" onmousedown="Moving.miss(event)">
                     <div id="moving-overlay" class="overlay" style="display:flex; font-size:30px; text-align:center; flex-direction:column;">点击START开始<br><span style="font-size:16px; margin-top:10px;">拦截所有移动目标</span></div>
                 </div>
             </div>
@@ -1940,10 +1941,10 @@
             document.getElementById('stroop-word').style.color = '';
 
             // 飞靶重置
-            mvPlaying = false;
-            clearInterval(mvInterval);
-            activeTargets.forEach(t => { gsap.killTweensOf(t.el); if (t.el && t.el.parentNode) t.el.remove(); });
-            activeTargets = [];
+            Moving.playing = false;
+            clearInterval(Moving.interval);
+            Moving.targets.forEach(t => { gsap.killTweensOf(t.el); if (t.el && t.el.parentNode) t.el.remove(); });
+            Moving.targets = [];
             const mvOverlay = document.getElementById('moving-overlay');
             if(mvOverlay) {
                 mvOverlay.style.display = 'flex';
@@ -1987,7 +1988,7 @@
                 } else if (currentView === 'stroop') {
                     if (!Stroop.playing) Stroop.start();
                 } else if (currentView === 'moving') {
-                    if (!mvPlaying) startMoving();
+                    if (!Moving.playing) Moving.start();
                 } else if (currentView === 'speedtest') {
                     startSpeedTest();
                 }
@@ -2188,116 +2189,6 @@
                     <div class="stat-box" style="grid-column: 1 / -1;"><div style="font-size:12px;">平均反应</div><div class="stat-val" style="color:var(--text-main); font-size:16px;">${routine.scores.reaction}ms</div></div>
                 </div>
             `;
-        }
-        // ==========================================
-        // 新增模块：移动飞靶 (Moving Target)
-        // ==========================================
-        let mvInterval = null, mvScore = 0, mvLives = 3, mvPlaying = false;
-        let activeTargets = [];
-        const mvBox = document.getElementById('moving-container');
-
-        function updateMvUI() {
-            document.getElementById('mv-score').innerText = mvScore;
-            document.getElementById('mv-score-hud').innerText = mvScore;
-            document.getElementById('mv-lives').innerText = '❤️'.repeat(mvLives) + '🖤'.repeat(3 - mvLives);
-        }
-
-        function startMoving() {
-            clearInterval(mvInterval);
-            document.getElementById('moving-overlay').style.display = 'none';
-
-            activeTargets.forEach(t => { gsap.killTweensOf(t.el); if (t.el && t.el.parentNode) t.el.remove(); });
-            activeTargets = [];
-
-            mvScore = 0; mvLives = 3; mvPlaying = true;
-            updateMvUI();
-
-            // Interval only handles spawning; movement is driven by per-target GSAP tweens
-            mvInterval = setInterval(() => {
-                if (!mvPlaying) return;
-                const spawnChance = Math.min(0.15, 0.02 + (mvScore * 0.001));
-                if (Math.random() < spawnChance) spawnMvTarg();
-            }, 50);
-        }
-
-        function spawnMvTarg() {
-            const el = document.createElement('div');
-            el.className = 'moving-target';
-
-            const size = Math.random() * 30 + 20;
-            const baseSpeed = 2 + (mvScore * 0.05);
-            const speedPxPerTick = (Math.random() < 0.5 ? 1 : -1) * (Math.random() * 2 + baseSpeed);
-            const speedPxPerSec = speedPxPerTick * 50; // original was px per 20ms tick
-            const boxW = mvBox.clientWidth;
-            const startX = speedPxPerTick > 0 ? -size : boxW;
-            const endX = speedPxPerTick > 0 ? boxW : -size;
-            const duration = Math.abs((endX - startX) / speedPxPerSec);
-
-            gsap.set(el, {
-                width: size,
-                height: size,
-                top: (Math.random() * 80 + 10) + '%',
-                y: '-50%',
-                x: startX
-            });
-
-            el.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                if (!mvPlaying) return;
-                mvScore++;
-                Utils.playSound('hit', 1, true);
-                updateMvUI();
-                gsap.killTweensOf(el);
-                activeTargets = activeTargets.filter(item => item.el !== el);
-                // scale-pop then remove
-                gsap.fromTo(el, { scale: 1.3 }, { scale: 0, duration: 0.15, ease: 'power2.in', onComplete: () => {
-                    if (el.parentNode) el.remove();
-                }});
-            });
-
-            const tween = gsap.to(el, {
-                x: endX,
-                duration: duration,
-                ease: 'none',
-                onComplete: () => {
-                    if (el.parentNode) el.remove();
-                    const idx = activeTargets.findIndex(item => item.el === el);
-                    if (idx !== -1) {
-                        activeTargets.splice(idx, 1);
-                        mvLives--;
-                        Utils.playSound('error', 0, true);
-                        updateMvUI();
-                        if (mvLives <= 0) endMoving();
-                    }
-                }
-            });
-
-            const targObj = { el: el, tween: tween };
-            activeTargets.push(targObj);
-            mvBox.appendChild(el);
-        }
-
-        function movingMiss(e) { }
-
-        function endMoving() {
-            mvPlaying = false;
-            clearInterval(mvInterval);
-            activeTargets.forEach(t => { gsap.killTweensOf(t.el); if (t.el && t.el.parentNode) t.el.remove(); });
-            activeTargets = [];
-            
-            const overlay = document.getElementById('moving-overlay');
-            overlay.style.display = 'flex';
-            overlay.style.background = 'rgba(0,0,0,0.8)';
-            overlay.style.color = 'white';
-            overlay.innerHTML = `行动失败<br><span style="font-size:16px; margin-top:10px;">最终拦截得分: <span style="color:var(--warning-color); font-weight:bold; font-size:20px;">${mvScore}</span></span><br><span style="font-size:14px; margin-top:10px; cursor:pointer;" onclick="startMoving()">点击此处或左侧重新开始</span>`;
-            
-            let pb = JSON.parse(localStorage.getItem('mv_best') || '{}');
-            if(!pb.score || mvScore > pb.score) {
-                pb.score = mvScore;
-                Storage.syncSetItem('mv_best', JSON.stringify(pb));
-                renderExtraPB();
-                updateRadarChart(); 
-            }
         }
     </script>
 </body>
