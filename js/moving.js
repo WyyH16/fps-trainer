@@ -56,8 +56,9 @@ window.Moving = (function() {
       updateUI();
       gsap.killTweensOf(el);
       targets = targets.filter(item => item.el !== el);
-      // scale-pop then remove
-      gsap.fromTo(el, { scale: 1.3, boxShadow: '0 0 20px var(--success-color)' }, { scale: 0, boxShadow: '0 0 0px var(--success-color)', duration: 0.2, ease: 'power2.in', onComplete: () => {
+      // Particle explosion + scale-pop
+      explodeAt(el);
+      gsap.fromTo(el, { scale: 1.4, boxShadow: '0 0 24px var(--success-glow)' }, { scale: 0, duration: 0.18, ease: 'power2.in', onComplete: () => {
         if (el.parentNode) el.remove();
       }});
     });
@@ -84,6 +85,42 @@ window.Moving = (function() {
     mvBox.appendChild(el);
   }
 
+  function explodeAt(el) {
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const container = document.getElementById('moving-container');
+    const colors = ['#f0a500', '#f04444', '#20d060', '#fff', '#3b82f6', '#a070e0'];
+
+    for (let i = 0; i < 10; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'moving-particle';
+      const angle = (Math.PI * 2 / 10) * i + Math.random() * 0.4;
+      const velocity = 40 + Math.random() * 70;
+      const size = 3 + Math.random() * 5;
+      particle.style.width = size + 'px';
+      particle.style.height = size + 'px';
+      particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+      particle.style.left = cx + 'px';
+      particle.style.top = cy + 'px';
+      particle.style.position = 'fixed';
+      particle.style.pointerEvents = 'none';
+      particle.style.zIndex = '100';
+      particle.style.borderRadius = '50%';
+      document.body.appendChild(particle);
+
+      gsap.to(particle, {
+        x: Math.cos(angle) * velocity,
+        y: Math.sin(angle) * velocity,
+        opacity: 0,
+        scale: 0,
+        duration: 0.45 + Math.random() * 0.25,
+        ease: 'power2.out',
+        onComplete: () => { if (particle.parentNode) particle.remove(); }
+      });
+    }
+  }
+
   function miss(e) { }
 
   function end() {
@@ -104,6 +141,7 @@ window.Moving = (function() {
       Storage.syncSetItem('mv_best', JSON.stringify(pb));
       App.renderExtraPB();
       Radar.update();
+      App.celebratePB('mv-pb');
     }
   }
 

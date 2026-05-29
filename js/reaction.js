@@ -97,6 +97,7 @@ window.Reaction = (function() {
       best = { ms: avgMs, date: dateStr, rank: rankDesc.name, color: rankDesc.color };
       Storage.syncSetItem('rtBest', JSON.stringify(best));
       Radar.update();
+      App.celebratePB('rt-best-time');
     }
     renderRtRecords();
   }
@@ -115,6 +116,14 @@ window.Reaction = (function() {
       bestDateEl.innerText = '--';
     }
 
+    // GSAP animate PB card elements
+    if (typeof gsap !== 'undefined') {
+      gsap.fromTo([bestTimeEl, bestRankEl, bestDateEl],
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.06, ease: 'power2.out' }
+      );
+    }
+
     const records = JSON.parse(localStorage.getItem('rtRecords') || '[]');
     const listEl = document.getElementById('rt-records');
     if (records.length === 0) { listEl.innerHTML = '<div class="empty-records">暂无反应测试记录</div>'; return; }
@@ -124,6 +133,12 @@ window.Reaction = (function() {
       html += '<tr><td style="color: var(--text-sub); font-size: 11px;">' + r.date + '</td><td style="font-weight:bold; font-family: monospace; font-size:16px;">' + r.ms + ' ms</td><td style="color: ' + r.color + '; font-weight:bold; font-size:12px;">' + r.rank + '</td></tr>';
     });
     listEl.innerHTML = html + '</table>';
+    if (typeof gsap !== 'undefined') {
+      gsap.fromTo(listEl.querySelectorAll('tr:not(:first-child)'),
+        { opacity: 0, x: -10 },
+        { opacity: 1, x: 0, duration: 0.25, stagger: 0.05, ease: 'power2.out' }
+      );
+    }
   }
 
   function clearRtRecords() {

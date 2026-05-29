@@ -70,6 +70,7 @@ window.Tile2048 = (function() {
       Storage.syncSetItem(GAME_2048_BEST_KEY, String(best2048Score));
       update2048BestUI();
       showToast('已保存2048本地最高分：' + best2048Score);
+      App.celebratePB('tile-best');
       if (entertainmentMode === '2048') LB.fetchEntertainment('2048');
     }
   }
@@ -109,14 +110,18 @@ window.Tile2048 = (function() {
         var cell = document.createElement('div');
         var tileClass = 'tile-cell tile-' + (val > 2048 ? '4096' : val);
         cell.className = tileClass;
-        if (lastAdded2048Tile && lastAdded2048Tile.r === r && lastAdded2048Tile.c === c) {
-          cell.classList.add('pop');
-        }
-        if (merged2048Tiles && merged2048Tiles.some(function(m) { return m.r === r && m.c === c; })) {
-          cell.classList.add('merged');
-        }
+        var isNew = lastAdded2048Tile && lastAdded2048Tile.r === r && lastAdded2048Tile.c === c;
+        var isMerged = merged2048Tiles && merged2048Tiles.some(function(m) { return m.r === r && m.c === c; });
         if (val) cell.innerText = val;
         container.appendChild(cell);
+
+        // GSAP animations replace CSS pop/merged keyframes
+        if (isNew) {
+          gsap.fromTo(cell, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.22, ease: 'back.out(1.7)' });
+        }
+        if (isMerged) {
+          gsap.fromTo(cell, { scale: 0.6 }, { scale: 1, duration: 0.28, ease: 'elastic.out(1, 0.45)' });
+        }
       }
     }
     var scoreEl = document.getElementById('tile-score');

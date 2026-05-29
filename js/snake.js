@@ -193,6 +193,7 @@ window.Snake = (function() {
       Storage.syncSetItem(BEST_KEY, String(bestScore));
       updateBestUI();
       showToast('已保存贪吃蛇本地最高分：' + bestScore);
+      App.celebratePB('snake-best');
       if (typeof entertainmentMode !== 'undefined' && entertainmentMode === 'snake') LB.fetchEntertainment('snake');
     }
   }

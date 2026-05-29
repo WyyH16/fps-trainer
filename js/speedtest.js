@@ -47,6 +47,7 @@ window.SpeedTest = (function() {
       if (bestRecordEl) bestRecordEl.innerText = best.toFixed(2);
       showToast('已保存手速测试本地最高 CPS：' + best);
       updateUI();
+      App.celebratePB('speed-best');
     }
   }
 

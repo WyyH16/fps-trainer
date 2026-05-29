@@ -49,6 +49,7 @@ window.Stroop = (function() {
           Storage.syncSetItem('st_best', JSON.stringify(pb));
           if (typeof App !== 'undefined' && App.renderExtraPB) App.renderExtraPB();
           if (typeof Radar !== 'undefined') Radar.update();
+          if (typeof App !== 'undefined') App.celebratePB('st-pb');
         }
       } else { nextWord(); }
     } else {

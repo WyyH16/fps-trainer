@@ -15,16 +15,25 @@ window.App = (function() {
     if (LB.MODULE_MAP[view]) { LB.fetchModule(view); }
 
     // GSAP stagger entrance for cards and panels
-    const children = viewEl.querySelectorAll('.module-card, .schulte-center, .rt-center, .aim-center, .stroop-center, .moving-center, .overview-center, .entertainment-small');
-    gsap.fromTo(children,
-      { opacity: 0, y: 20, filter: 'blur(2px)' },
-      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, stagger: 0.05, ease: 'power3.out' }
-    );
-    // Header accent flash
-    gsap.fromTo('.header-wrap',
-      { borderBottomColor: 'transparent' },
-      { borderBottomColor: 'var(--accent-color)', duration: 0.6, ease: 'power2.out' }
-    );
+    if (typeof gsap !== 'undefined') {
+      // Tactical HUD refresh flash
+      gsap.fromTo(viewEl,
+        { opacity: 0.8 },
+        { opacity: 1, duration: 0.12, ease: 'power2.in' }
+      );
+
+      const children = viewEl.querySelectorAll('.module-card, .schulte-center, .rt-center, .aim-center, .stroop-center, .moving-center, .overview-center, .entertainment-small');
+      gsap.fromTo(children,
+        { opacity: 0, y: 20, filter: 'blur(2px)' },
+        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.4, stagger: 0.05, ease: 'power3.out', delay: 0.1 }
+      );
+
+      // Header accent flash
+      gsap.fromTo('.header-wrap',
+        { borderBottomColor: 'transparent' },
+        { borderBottomColor: 'var(--accent-color)', duration: 0.6, ease: 'power2.out' }
+      );
+    }
   }
 
   function toggleTheme() {
@@ -124,6 +133,47 @@ window.App = (function() {
   }
 
   function init() {
+    // === Tactical Boot Sequence ===
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!sessionStorage.getItem('booted') && !prefersReducedMotion) {
+      sessionStorage.setItem('booted', 'true');
+      var bootEl = document.getElementById('boot-screen');
+      if (bootEl && typeof gsap !== 'undefined') {
+        var bootTL = gsap.timeline({
+          defaults: { ease: 'power2.out' },
+          onComplete: function() {
+            if (bootEl.parentNode) bootEl.parentNode.removeChild(bootEl);
+          }
+        });
+        bootTL
+          .fromTo(bootEl, { opacity: 0 }, { opacity: 1, duration: 0.1 })
+          .fromTo('.boot-line1', { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.28 }, '+=0.05')
+          .fromTo('.boot-line2', { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.25 }, '-=0.12')
+          .fromTo('.boot-line3', { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.25 }, '-=0.12')
+          .call(function() {
+            var statusEl = document.querySelector('.boot-status');
+            if (statusEl) statusEl.textContent = 'ONLINE';
+          })
+          .to('.boot-status', { color: '#20d060', duration: 0.25 })
+          .fromTo('.boot-progress-fill', { width: '0%' }, { width: '100%', duration: 0.45, ease: 'power2.inOut' }, '-=0.15')
+          .to('.boot-line3', { color: '#20d060', duration: 0.2 })
+          .to('.boot-content', { x: 4, duration: 0.03 })
+          .to('.boot-content', { x: -4, duration: 0.03 })
+          .to('.boot-content', { x: 0, duration: 0.03 })
+          .to(bootEl, { opacity: 0, duration: 0.28, ease: 'power2.in' }, '+=0.08');
+      }
+      // Fallback: remove boot screen even if GSAP fails
+      setTimeout(function() {
+        var b = document.getElementById('boot-screen');
+        if (b && b.parentNode) b.parentNode.removeChild(b);
+      }, 2500);
+    } else {
+      // Clean up if boot screen still exists defensively
+      var leftover = document.getElementById('boot-screen');
+      if (leftover && leftover.parentNode) leftover.parentNode.removeChild(leftover);
+    }
+    // === End Boot Sequence ===
+
     Schulte.renderRecords();
     Reaction.renderRecords();
     renderExtraPB();
@@ -153,10 +203,50 @@ window.App = (function() {
   function celebratePB(elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;
+
+    // Screen-wide pulse ring
+    const ring = document.createElement('div');
+    ring.className = 'pb-pulse-ring';
+    ring.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;border:3px solid var(--accent-color);border-radius:0;opacity:0.6;';
+    document.body.appendChild(ring);
+    gsap.fromTo(ring,
+      { scale: 1.05, opacity: 0.5 },
+      { scale: 1.0, opacity: 0, duration: 0.7, ease: 'power2.out',
+        onComplete: () => { if (ring.parentNode) ring.remove(); } }
+    );
+
+    // Element glow + pop
     gsap.fromTo(el,
       { scale: 1, textShadow: '0 0 0px var(--accent-glow)' },
-      { scale: 1.08, textShadow: '0 0 20px var(--accent-glow)', duration: 0.3, yoyo: true, repeat: 2, ease: 'power2.inOut' }
+      { scale: 1.15, textShadow: '0 0 30px var(--accent-glow), 0 0 60px var(--accent-color)', duration: 0.3, yoyo: true, repeat: 2, ease: 'elastic.out(1, 0.4)' }
     );
+
+    // Particle burst from element center
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const colors = ['#f0a500', '#f04444', '#20d060', '#fff', '#3b82f6', '#a070e0'];
+
+    for (let i = 0; i < 16; i++) {
+      const particle = document.createElement('div');
+      particle.style.cssText = 'position:fixed;pointer-events:none;z-index:9998;border-radius:50%;width:6px;height:6px;';
+      particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+      particle.style.left = cx + 'px';
+      particle.style.top = cy + 'px';
+      document.body.appendChild(particle);
+
+      const angle = (Math.PI * 2 / 16) * i;
+      const velocity = 30 + Math.random() * 60;
+      gsap.to(particle, {
+        x: Math.cos(angle) * velocity,
+        y: Math.sin(angle) * velocity,
+        opacity: 0,
+        scale: 0,
+        duration: 0.6 + Math.random() * 0.3,
+        ease: 'power2.out',
+        onComplete: () => { if (particle.parentNode) particle.remove(); }
+      });
+    }
   }
 
   // Keyboard listener

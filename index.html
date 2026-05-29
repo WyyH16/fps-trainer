@@ -129,9 +129,23 @@
     </script>
 <body>
 
+    <!-- Tactical Boot Screen -->
+    <div id="boot-screen" class="boot-overlay">
+        <div class="boot-content">
+            <div class="boot-line boot-line1">SYS_INIT // TACTICAL STATION v2.1</div>
+            <div class="boot-line boot-line2">> AUTHENTICATING NEURAL LINK...</div>
+            <div class="boot-line boot-line3">> LOADING COMBAT MODULES...</div>
+            <div class="boot-progress-track">
+                <div class="boot-progress-fill"></div>
+            </div>
+            <div class="boot-status">STANDBY</div>
+        </div>
+        <div class="boot-scanline"></div>
+    </div>
+
     <div class="header-wrap">
         <div class="title-area">
-            <h1>FPS训练台 <span style="color:var(--text-sub);font-size:12px;font-weight:500;letter-spacing:0.08em;">// TACTICAL STATION</span></h1>
+            <h1><span class="sys-status-dot" title="SYSTEM ONLINE"></span>FPS训练台 <span style="color:var(--text-sub);font-size:12px;font-weight:500;letter-spacing:0.08em;">// TACTICAL STATION</span></h1>
             <div class="nav-tabs">
                 <button class="tab-btn active" onclick="App.switchView('overview')">📊 综合总览</button>
                 <button class="tab-btn" onclick="App.switchView('schulte')">🟥 方格索敌 (Schulte)</button>

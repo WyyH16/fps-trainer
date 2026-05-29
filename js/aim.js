@@ -79,6 +79,7 @@ window.Aim = (function() {
       Storage.syncSetItem('aim_best', JSON.stringify(pb));
       App.renderExtraPB();
       Radar.update();
+      App.celebratePB('aim-pb-hits');
     }
     if (Routine.active) Routine.next('aim', hits);
   }

@@ -183,6 +183,7 @@ window.Schulte = (function() {
       Storage.syncSetItem('schulteBests', JSON.stringify(bests));
       // TODO: 后续由 Radar 模块接管
       if(typeof Radar !== 'undefined') Radar.update();
+      App.celebratePB('schulte-bests');
     }
     renderRecords(); drawChart();
   }
@@ -200,7 +201,14 @@ window.Schulte = (function() {
         bestHtml += `<div class="pb-card unchallenged"><div class="pb-size">${s}</div><div class="pb-time">--</div><div class="pb-rank" style="color: #9ca3af; background-color: rgba(156, 163, 175, 0.2);">未挑战</div></div>`;
       }
     }
-    document.getElementById('schulte-bests').innerHTML = bestHtml;
+    var bestsEl = document.getElementById('schulte-bests');
+    bestsEl.innerHTML = bestHtml;
+    if (typeof gsap !== 'undefined') {
+      gsap.fromTo(bestsEl.children,
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.04, ease: 'power2.out' }
+      );
+    }
 
     const records = JSON.parse(localStorage.getItem('schulteRecords') || '[]');
     const listEl = document.getElementById('schulte-records');
@@ -211,6 +219,12 @@ window.Schulte = (function() {
       html += `<tr><td style="color: var(--text-sub); font-size: 11px;">${r.date}</td><td><b>${r.size}</b></td><td style="font-size: 12px; color: ${r.tags?"#ef4444":"var(--text-sub)"};">${r.tags?"极":"普"}</td><td style="font-weight:bold; font-family: monospace;">${r.time}</td><td style="color: ${rankColor}; font-weight:bold; font-size:12px;">${r.rank}</td></tr>`;
     });
     listEl.innerHTML = html + '</table>';
+    if (typeof gsap !== 'undefined') {
+      gsap.fromTo(listEl.querySelectorAll('tr:not(:first-child)'),
+        { opacity: 0, x: -10 },
+        { opacity: 1, x: 0, duration: 0.25, stagger: 0.05, ease: 'power2.out' }
+      );
+    }
   }
 
   function clearRecords() {
